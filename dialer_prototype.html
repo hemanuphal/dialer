@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alice Dialer — 11x AI</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+
+/* SIDEBAR */
+.sidebar { width: 200px; min-width: 200px; background: #0a0a0a; display: flex; flex-direction: column; height: 100vh; }
+.sidebar-logo { padding: 18px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1a1a1a; }
+.sidebar-logo-mark { width: 28px; height: 28px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #000; }
+.sidebar-logo-text { color: #fff; font-weight: 700; font-size: 15px; }
+.sidebar-user { padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #1a1a1a; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #3b3b3b; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #ccc; font-weight: 600; flex-shrink: 0; }
+.avatar.sm { width: 24px; height: 24px; font-size: 10px; }
+.avatar.lg { width: 36px; height: 36px; font-size: 14px; }
+.sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-name { color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-user-role { color: #666; font-size: 11px; }
+.sidebar-create-btn { margin: 12px 12px 8px; background: #1a1a1a; color: #fff; border: 1px solid #2a2a2a; border-radius: 8px; padding: 9px 12px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; transition: background .15s; }
+.sidebar-create-btn:hover { background: #222; }
+.sidebar-nav { flex: 1; padding: 4px 0; overflow-y: auto; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; color: #888; font-size: 13px; cursor: pointer; transition: all .15s; border-radius: 0; position: relative; }
+.nav-item:hover { color: #ddd; background: #111; }
+.nav-item.active { color: #fff; background: #1a1a1a; }
+.nav-item .nav-icon { width: 16px; text-align: center; font-size: 14px; }
+.nav-item .nav-badge { margin-left: auto; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
+.nav-item .nav-badge.blue { background: #3b82f6; }
+.nav-divider { height: 1px; background: #1a1a1a; margin: 8px 0; }
+.sidebar-bottom { padding: 12px; border-top: 1px solid #1a1a1a; }
+.sidebar-bottom-item { display: flex; align-items: center; gap: 10px; padding: 8px; color: #666; font-size: 12px; cursor: pointer; border-radius: 6px; }
+.sidebar-bottom-item:hover { color: #999; background: #111; }
+
+/* MAIN CONTENT */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 52px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+.topbar-title { font-size: 18px; font-weight: 600; color: #111; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-badge { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #555; cursor: pointer; padding: 6px 10px; border-radius: 6px; border: 1px solid #e8e8e8; transition: all .15s; }
+.topbar-badge:hover { background: #f5f5f5; }
+.topbar-badge .count { font-weight: 700; color: #111; }
+.topbar-badge.urgent .count { color: #ef4444; }
+.content { flex: 1; overflow-y: auto; }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; height: 100%; }
+
+/* ===== SCREEN 1: CAMPAIGNS ===== */
+.metrics-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 1px solid #e8e8e8; background: #fff; }
+.metric-card { padding: 20px 24px; border-right: 1px solid #e8e8e8; }
+.metric-card:last-child { border-right: none; }
+.metric-label { display: flex; align-items: center; gap: 6px; color: #777; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+.metric-value { font-size: 28px; font-weight: 700; color: #111; line-height: 1; }
+.metric-sub { font-size: 12px; color: #999; margin-top: 6px; }
+.metric-sparkline { height: 32px; margin-top: 8px; }
+.sparkline { width: 100%; height: 32px; }
+
+.toolbar { padding: 16px 24px 12px; background: #fff; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #e8e8e8; }
+.search-input { display: flex; align-items: center; gap: 8px; background: #f5f5f5; border: 1px solid #e8e8e8; border-radius: 8px; padding: 7px 12px; font-size: 13px; color: #555; cursor: text; flex: 1; max-width: 300px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .15s; white-space: nowrap; }
+.btn-primary { background: #0f172a; color: #fff; }
+.btn-primary:hover { background: #1e293b; }
+.btn-secondary { background: #fff; color: #333; border-color: #e8e8e8; }
+.btn-secondary:hover { background: #f5f5f5; }
+.btn-teal { background: #0d9488; color: #fff; }
+.btn-teal:hover { background: #0f766e; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-ghost { background: transparent; color: #555; border-color: #e8e8e8; }
+.btn-ghost:hover { background: #f5f5f5; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-lg { padding: 10px 20px; font-size: 14px; }
+.ml-auto { margin-left: auto; }
+
+.data-table { width: 100%; border-collapse: collapse; background: #fff; }
+.data-table th { padding: 11px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #888; border-bottom: 1px solid #e8e8e8; white-space: nowrap; }
+.data-table td { padding: 13px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; }
+.data-table tr:hover td { background: #fafafa; }
+.data-table .checkbox { width: 16px; height: 16px; border: 1.5px solid #d0d0d0; border-radius: 4px; cursor: pointer; }
+.campaign-name { font-weight: 500; color: #111; cursor: pointer; }
+.campaign-name:hover { color: #0d9488; text-decoration: underline; }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+.status-active { background: #dcfce7; color: #166534; }
+.status-draft { background: #f3f4f6; color: #555; }
+.status-paused { background: #fef3c7; color: #92400e; }
+.health-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+.health-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.health-excellent { color: #16a34a; } .health-excellent .health-dot { background: #16a34a; }
+.health-monitoring { color: #2563eb; } .health-monitoring .health-dot { background: #2563eb; }
+.health-limited { color: #f59e0b; } .health-limited .health-dot { background: #f59e0b; }
+.health-complete { color: #888; } .health-complete .health-dot { background: #888; }
+.owner-avatar { width: 24px; height: 24px; border-radius: 50%; background: #3b3b3b; color: #fff; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.filter-bar { padding: 12px 24px; background: #fff; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e8e8e8; }
+.filter-chip { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 12px; color: #555; cursor: pointer; background: #fff; }
+.filter-chip:hover { background: #f5f5f5; }
+
+/* ===== SCREEN 2: CAMPAIGN CREATION ===== */
+.campaign-creation-header { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 0 24px; display: flex; align-items: center; height: 52px; gap: 16px; }
+.tab-bar { display: flex; gap: 0; padding: 0 24px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+.tab { padding: 14px 16px; font-size: 13px; color: #888; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; transition: all .15s; }
+.tab:hover { color: #333; }
+.tab.active { color: #111; border-bottom-color: #111; }
+.campaign-body { display: flex; flex: 1; overflow: hidden; }
+.campaign-main { flex: 1; overflow-y: auto; padding: 24px; }
+.campaign-preview { width: 360px; border-left: 1px solid #e8e8e8; background: #fafafa; overflow-y: auto; }
+.section-header { font-size: 11px; font-weight: 700; color: #888; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sequence-step { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; margin-bottom: 0; position: relative; }
+.sequence-step-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; }
+.sequence-connector { width: 2px; height: 20px; background: #e8e8e8; margin: 0 auto; position: relative; left: 23px; }
+.step-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.step-email { background: #eff6ff; color: #2563eb; }
+.step-linkedin { background: #eff6ff; color: #0077b5; }
+.step-call { background: #fff7ed; color: #ea580c; }
+.step-label { font-size: 13px; font-weight: 600; color: #111; }
+.step-sublabel { font-size: 11px; color: #888; margin-top: 1px; }
+.step-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.sequence-step.call-step { border-color: #fed7aa; background: #fffbf5; }
+.sequence-step.call-step .sequence-step-header { background: #fffbf5; border-radius: 10px; }
+.call-branch { padding: 12px 16px 14px; border-top: 1px solid #fed7aa; background: #fff8f0; border-radius: 0 0 10px 10px; }
+.branch-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 12px; }
+.branch-outcome { color: #555; font-weight: 500; width: 140px; flex-shrink: 0; }
+.branch-arrow { color: #ccc; }
+.branch-action { color: #0d9488; font-weight: 500; }
+.add-step-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
+.add-step-line { flex: 1; height: 1px; background: #e8e8e8; }
+.add-step-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1.5px dashed #d0d0d0; border-radius: 8px; font-size: 12px; color: #888; cursor: pointer; background: #fff; transition: all .15s; }
+.add-step-btn:hover { border-color: #ea580c; color: #ea580c; background: #fff7ed; }
+
+/* ===== SCREEN 3: DIALER PRE-SESSION ===== */
+.dialer-layout { display: flex; flex: 1; overflow: hidden; }
+.dialer-left { width: 280px; border-right: 1px solid #e8e8e8; background: #fff; overflow-y: auto; padding: 20px 16px; flex-shrink: 0; }
+.dialer-center { flex: 1; overflow-y: auto; }
+.mode-selector { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.mode-option { border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 12px; cursor: pointer; transition: all .15s; }
+.mode-option:hover { border-color: #0d9488; background: #f0fdf9; }
+.mode-option.selected { border-color: #0d9488; background: #f0fdf9; }
+.mode-option-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.mode-radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #d0d0d0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.mode-option.selected .mode-radio { border-color: #0d9488; }
+.mode-option.selected .mode-radio::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #0d9488; }
+.mode-name { font-size: 13px; font-weight: 600; color: #111; }
+.mode-desc { font-size: 11px; color: #888; margin-left: 24px; line-height: 1.4; }
+.parallel-control { display: flex; align-items: center; gap: 8px; margin-top: 8px; margin-left: 24px; }
+.parallel-btn { width: 28px; height: 28px; border: 1px solid #e8e8e8; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #555; background: #fff; }
+.parallel-btn:hover { background: #f5f5f5; }
+.parallel-val { font-size: 14px; font-weight: 700; color: #111; width: 20px; text-align: center; }
+
+.session-list { padding: 20px 24px; }
+.session-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.session-list-title { font-size: 15px; font-weight: 700; color: #111; }
+.lead-row { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all .15s; display: flex; align-items: flex-start; gap: 12px; }
+.lead-row:hover { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.06); }
+.lead-row.selected { border-color: #0d9488; background: #f0fdf9; }
+.lead-check { margin-top: 2px; }
+.lead-check input[type=checkbox] { width: 15px; height: 15px; accent-color: #0d9488; cursor: pointer; }
+.lead-info { flex: 1; min-width: 0; }
+.lead-name { font-weight: 600; color: #111; font-size: 13px; }
+.lead-role { font-size: 12px; color: #666; margin-top: 1px; }
+.lead-company { font-size: 12px; color: #888; }
+.signal-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.signal-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.signal-hot { background: #fee2e2; color: #b91c1c; }
+.signal-warm { background: #fff7ed; color: #c2410c; }
+.signal-social { background: #eff6ff; color: #1d4ed8; }
+.signal-funding { background: #f5f3ff; color: #6d28d9; }
+.signal-neutral { background: #f3f4f6; color: #4b5563; }
+.signal-job { background: #fef3c7; color: #92400e; }
+.lead-priority { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.priority-score { font-size: 11px; font-weight: 700; color: #0d9488; background: #f0fdf9; padding: 3px 7px; border-radius: 6px; }
+
+/* ===== SCREEN 4: ACTIVE CALL ===== */
+.call-layout { display: flex; height: 100%; overflow: hidden; }
+.call-queue-panel { width: 240px; border-right: 1px solid #e8e8e8; background: #fff; overflow-y: auto; flex-shrink: 0; }
+.call-queue-header { padding: 14px 16px; border-bottom: 1px solid #e8e8e8; font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; justify-content: space-between; }
+.queue-lead { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background .12s; }
+.queue-lead:hover { background: #fafafa; }
+.queue-lead.active-call { background: #f0fdf9; border-left: 3px solid #0d9488; }
+.queue-lead-name { font-size: 12px; font-weight: 600; color: #111; }
+.queue-lead-role { font-size: 11px; color: #888; }
+.queue-signal { margin-top: 5px; }
+
+.call-center { flex: 1; display: flex; flex-direction: column; background: #fff; border-right: 1px solid #e8e8e8; overflow: hidden; }
+.call-status-bar { padding: 12px 20px; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.call-status-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+.status-dot-pulse { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; }
+.status-dot-ring { width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; animation: ring-pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.1)} }
+@keyframes ring-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.call-timer { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.call-prospect-header { padding: 20px 24px 16px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+.prospect-name-big { font-size: 22px; font-weight: 700; color: #111; }
+.prospect-meta { font-size: 13px; color: #666; margin-top: 4px; }
+.prospect-phone { font-size: 12px; color: #888; margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+
+.softphone { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+.softphone-controls { display: flex; align-items: center; gap: 12px; }
+.ctrl-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #e8e8e8; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all .15s; }
+.ctrl-btn:hover { background: #f5f5f5; }
+.ctrl-btn.active { background: #fee2e2; border-color: #fca5a5; }
+.ctrl-btn.end-call { background: #ef4444; border-color: #ef4444; width: 56px; height: 56px; font-size: 22px; }
+.ctrl-btn.end-call:hover { background: #dc2626; }
+.ctrl-btn.vm-drop { background: #fff7ed; border-color: #fed7aa; color: #ea580c; font-size: 13px; font-weight: 600; width: auto; height: 36px; border-radius: 8px; padding: 0 14px; }
+.ctrl-btn { position: relative; }
+.ctrl-btn::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #111; color: #fff; font-size: 11px; font-weight: 500; padding: 4px 8px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s .3s; z-index: 999; }
+.ctrl-btn:hover::after { opacity: 1; }
+
+.call-notes { flex: 1; padding: 16px 24px; overflow-y: auto; }
+.notes-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.notes-textarea { width: 100%; border: 1px solid #e8e8e8; border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; resize: none; min-height: 120px; outline: none; }
+.notes-textarea:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.08); }
+.notes-hint { font-size: 11px; color: #bbb; margin-top: 6px; }
+
+.call-context-panel { width: 320px; background: #fafafa; overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; }
+.context-tabs { display: flex; border-bottom: 1px solid #e8e8e8; background: #fff; flex-shrink: 0; }
+.context-tab { flex: 1; padding: 11px 8px; font-size: 12px; font-weight: 500; color: #888; text-align: center; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+.context-tab:hover { color: #333; }
+.context-tab.active { color: #111; border-bottom-color: #111; }
+.context-body { flex: 1; overflow-y: auto; padding: 16px; }
+.info-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; font-size: 12px; }
+.info-label { color: #999; width: 72px; flex-shrink: 0; font-weight: 500; }
+.info-val { color: #222; flex: 1; }
+.info-link { color: #2563eb; text-decoration: none; }
+.info-link:hover { text-decoration: underline; }
+.research-block { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+.research-block-title { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.research-block-text { font-size: 12px; color: #333; line-height: 1.5; }
+.activity-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+.activity-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+.act-email { background: #eff6ff; }
+.act-linkedin { background: #eff6ff; }
+.act-call { background: #fff7ed; }
+.activity-text { flex: 1; font-size: 12px; color: #333; }
+.activity-time { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+/* ===== SCREEN 5: POST-CALL ===== */
+.disposition-modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: flex-start; justify-content: center; z-index: 100; padding-top: 60px; }
+.disposition-modal.hidden { display: none; }
+.disposition-panel { background: #fff; border-radius: 14px; width: 620px; max-height: calc(100vh - 80px); overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.disp-header { padding: 20px 24px 16px; border-bottom: 1px solid #e8e8e8; }
+.disp-title { font-size: 17px; font-weight: 700; color: #111; }
+.disp-subtitle { font-size: 12px; color: #888; margin-top: 3px; }
+.disp-section { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; }
+.disp-section-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.ai-suggestion { display: flex; align-items: center; gap: 8px; background: #f0fdf9; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #065f46; margin-bottom: 10px; }
+.disp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.disp-chip { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid #e8e8e8; color: #555; transition: all .15s; }
+.disp-chip:hover { border-color: #0d9488; color: #0d9488; }
+.disp-chip.selected { border-color: #0d9488; background: #f0fdf9; color: #0d9488; }
+.disp-chip.negative.selected { border-color: #ef4444; background: #fee2e2; color: #b91c1c; }
+.disp-chip.neutral.selected { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+.seq-action-btn { flex: 1; padding: 8px 0; border-radius: 8px; border: 1.5px solid #e8e8e8; background: #fff; font-size: 13px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s; }
+.seq-action-btn:hover { border-color: #0d9488; color: #0d9488; }
+.seq-action-btn.active-continue { border-color: #0d9488; background: #f0fdf9; color: #0f766e; }
+.seq-action-btn.active-stop { border-color: #ef4444; background: #fee2e2; color: #b91c1c; }
+.seq-action-btn.active-snooze { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+.actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.action-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; cursor: pointer; transition: all .15s; }
+.action-card:hover { border-color: #0d9488; background: #f0fdf9; }
+.action-card-icon { font-size: 18px; margin-bottom: 4px; }
+.action-card-label { font-size: 12px; font-weight: 600; color: #111; }
+.action-card-desc { font-size: 11px; color: #888; margin-top: 2px; }
+.crm-extract { background: #f9f9f9; border-radius: 8px; padding: 12px; }
+.crm-field { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.crm-field-label { font-size: 11px; color: #888; width: 120px; flex-shrink: 0; padding-top: 3px; }
+.crm-field-val { flex: 1; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #333; }
+.disp-footer { padding: 16px 24px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; border-top: 1px solid #e8e8e8; }
+
+/* ===== SCREEN 6: ANALYTICS ===== */
+.analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 24px 0; }
+.analytics-kpi { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 18px 20px; }
+.kpi-value { font-size: 32px; font-weight: 800; color: #111; line-height: 1; }
+.kpi-label { font-size: 12px; color: #888; margin-top: 6px; font-weight: 500; }
+.kpi-change { font-size: 11px; margin-top: 8px; font-weight: 600; }
+.kpi-up { color: #16a34a; }
+.kpi-down { color: #ef4444; }
+.analytics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px 24px; }
+.analytics-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 18px; overflow: hidden; }
+.analytics-card-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 14px; }
+
+/* Donut chart */
+.donut-wrap { display: flex; align-items: center; gap: 24px; }
+.donut-svg { width: 120px; height: 120px; flex-shrink: 0; }
+.donut-legend { flex: 1; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { color: #555; flex: 1; }
+.legend-pct { font-weight: 700; color: #111; }
+
+.leaderboard { width: 100%; border-collapse: collapse; }
+.leaderboard th { font-size: 11px; color: #888; font-weight: 600; text-align: left; padding: 0 0 8px; border-bottom: 1px solid #e8e8e8; }
+.leaderboard td { font-size: 12px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; color: #333; vertical-align: middle; }
+.rank { font-weight: 700; color: #888; width: 20px; }
+.rank-1 { color: #f59e0b; }
+.signal-table { width: 100%; border-collapse: collapse; }
+.signal-table th { font-size: 11px; color: #888; font-weight: 600; text-align: left; padding: 0 0 8px; border-bottom: 1px solid #e8e8e8; }
+.signal-table td { font-size: 12px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; color: #333; }
+.bar-mini { height: 6px; border-radius: 3px; background: #0d9488; display: inline-block; }
+
+/* MISC */
+.tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #f3f4f6; color: #555; }
+.text-muted { color: #888; }
+.text-sm { font-size: 12px; }
+.divider { height: 1px; background: #e8e8e8; margin: 12px 0; }
+.inline-icon { font-size: 14px; }
+.pre-session-cta { padding: 20px 24px; border-top: 1px solid #e8e8e8; background: #fff; display: flex; align-items: center; justify-content: space-between; }
+
+/* ===== LEADS SCREEN ===== */
+.leads-layout { display: flex; flex: 1; overflow: hidden; }
+.leads-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.leads-tabs { display: flex; gap: 0; padding: 0 24px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+.leads-tab { padding: 14px 16px; font-size: 14px; color: #888; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; }
+.leads-tab:hover { color: #333; }
+.leads-tab.active { color: #111; border-bottom-color: #111; }
+.leads-sub-tabs { display: flex; align-items: center; gap: 8px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+.sub-tab { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #e8e8e8; color: #555; background: #fff; display: flex; align-items: center; gap: 5px; }
+.sub-tab.active { background: #111; color: #fff; border-color: #111; }
+.sub-tab .sub-count { font-size: 11px; font-weight: 700; }
+.leads-filter-bar { display: flex; align-items: center; gap: 8px; padding: 10px 24px; background: #fff; border-bottom: 1px solid #e8e8e8; position: relative; }
+.leads-search { display: flex; align-items: center; gap: 8px; flex: 1; padding: 8px 12px; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 13px; color: #999; cursor: text; max-width: 340px; background: #fff; }
+.leads-table-wrap { flex: 1; overflow-y: auto; background: #fff; }
+.leads-table { width: 100%; border-collapse: collapse; }
+.leads-table th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #888; border-bottom: 1px solid #e8e8e8; white-space: nowrap; position: sticky; top: 0; background: #fff; z-index: 1; }
+.leads-table td { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; vertical-align: middle; }
+.leads-table tr:hover td { background: #fafafa; cursor: pointer; }
+.leads-table tr.selected-row td { background: #f0fdf9; }
+.lead-contact { display: flex; align-items: center; gap: 10px; }
+.lead-contact-avatar { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+.lead-contact-name { font-weight: 500; color: #111; font-size: 13px; }
+.sender-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 10px; font-weight: 700; background: #e5e7eb; color: #374151; }
+.lead-status-info { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 6px; }
+.status-info-req { background: #dcfce7; color: #166534; }
+.status-bounced { background: #fee2e2; color: #991b1b; }
+.status-meeting { background: #dbeafe; color: #1e40af; }
+.status-call-due { background: #f0fdf9; color: #0f766e; border: 1px solid #99f6e4; }
+.activity-signal { font-size: 11px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.act-email { color: #d97706; }
+.act-linkedin { color: #2563eb; }
+.act-clicked { color: #0d9488; }
+.act-replied { color: #16a34a; }
+.act-none { color: #bbb; }
+tr.has-dialer { border-left: 3px solid #0d9488; }
+.last-msg-cell { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }
+.last-msg-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; background: #f3f4f6; flex-shrink: 0; }
+
+/* SIDE PANEL — floats over content */
+.leads-side-panel { position: fixed; right: 0; top: 52px; height: calc(100vh - 52px); width: 420px; border-left: 1px solid #e8e8e8; background: #fff; overflow-y: auto; display: flex; flex-direction: column; z-index: 50; box-shadow: -6px 0 24px rgba(0,0,0,.1); transition: transform .2s; }
+.leads-side-panel.hidden { transform: translateX(100%); pointer-events: none; }
+.side-panel-header { padding: 16px; border-bottom: 1px solid #e8e8e8; }
+.side-panel-campaign { font-size: 12px; color: #555; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.side-panel-nav { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+.side-nav-btn { width: 28px; height: 28px; border: 1px solid #e8e8e8; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; background: #fff; }
+.side-nav-btn:hover { background: #f5f5f5; }
+.side-panel-lead-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.side-panel-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.side-panel-name { font-size: 17px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 6px; }
+.side-panel-role { font-size: 13px; color: #666; margin-top: 2px; }
+.side-panel-actions { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.side-action-icon { width: 30px; height: 30px; border: 1px solid #e8e8e8; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; background: #fff; }
+.side-action-icon:hover { background: #f5f5f5; }
+.side-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; }
+.side-tag-sender { background: #f3f4f6; color: #374151; }
+.side-tag-status { background: #dcfce7; color: #166534; }
+.side-tag-hot { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.side-tag-follow { background: #111; color: #fff; }
+.side-panel-btns { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.side-panel-tabs { display: flex; border-bottom: 1px solid #e8e8e8; background: #fff; flex-shrink: 0; }
+.side-panel-tab { flex: 1; padding: 11px 8px; font-size: 12px; font-weight: 500; color: #888; text-align: center; cursor: pointer; border-bottom: 2px solid transparent; }
+.side-panel-tab:hover { color: #333; }
+.side-panel-tab.active { color: #111; border-bottom-color: #111; }
+.side-panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+.seq-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.seq-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.seq-content { flex: 1; }
+.seq-title { font-size: 13px; font-weight: 500; color: #111; display: flex; align-items: center; justify-content: space-between; }
+.seq-meta { font-size: 11px; color: #888; margin-top: 2px; }
+.seq-body { font-size: 12px; color: #555; margin-top: 6px; line-height: 1.5; }
+.dialer-section { padding: 14px 16px; border-top: 2px solid #f0f0f0; background: #fafafa; }
+.dialer-section-title { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.session-mode-card { border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all .15s; }
+.session-mode-card:hover { border-color: #0d9488; background: #f0fdf9; }
+.session-mode-card.selected { border-color: #0d9488; background: #f0fdf9; }
+#masterDialerBtn.active { opacity:1!important; cursor:pointer!important; background:#0d9488!important; color:#fff!important; border-color:#0d9488!important; }
+.dial-mode-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.dial-mode-btn { flex: 1; padding: 7px 6px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: 11px; font-weight: 600; color: #555; text-align: center; cursor: pointer; background: #fff; transition: all .15s; }
+.dial-mode-btn:hover { border-color: #0d9488; color: #0d9488; }
+.dial-mode-btn.active { border-color: #0d9488; background: #f0fdf9; color: #0d9488; }
+.parallel-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; margin-bottom: 12px; }
+
+/* Filter dropdown */
+.filter-dropdown { position: absolute; top: 100%; left: 130px; background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index: 50; min-width: 220px; padding: 6px 0; }
+.filter-dropdown.hidden { display: none; }
+.filter-search { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+.filter-search input { width: 100%; border: none; outline: none; font-size: 12px; color: #555; background: transparent; }
+.filter-opt { display: flex; align-items: center; gap: 10px; padding: 9px 14px; font-size: 13px; color: #333; cursor: pointer; }
+.filter-opt:hover { background: #f5f5f5; }
+.filter-opt-icon { width: 16px; text-align: center; font-size: 13px; }
+.active-filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid #0d9488; border-radius: 6px; font-size: 12px; color: #0d9488; background: #f0fdf9; cursor: pointer; }
+.active-filter-chip .chip-x { color: #aaa; font-size: 14px; margin-left: 2px; }
+.filter-sub { background: #fafafa; border-left: 2px solid #e8e8e8; margin: 0 8px 4px; border-radius: 0 0 6px 6px; }
+.filter-sub.hidden { display: none; }
+.filter-sub-opt { padding: 8px 14px; font-size: 12px; color: #333; cursor: pointer; }
+.filter-sub-opt:hover { background: #f0fdf9; color: #0d9488; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+/* Timer */
+#callTimerDisplay { font-variant-numeric: tabular-nums; }
+
+/* Voicemail banner */
+.vm-banner { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 14px; margin: 0 24px 12px; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #9a3412; display: none; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">11</div>
+    <div class="sidebar-logo-text">11x</div>
+  </div>
+  <div class="sidebar-user">
+    <div class="avatar" style="background:#2d4a3e;color:#6ee7b7">A</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name">Alice</div>
+      <div class="sidebar-user-role">Digital Worker</div>
+    </div>
+  </div>
+  <button class="sidebar-create-btn" onclick="showScreen('campaigns')">Create Campaign</button>
+  <div class="sidebar-nav">
+    <div class="nav-item active" id="nav-campaigns" onclick="showScreen('campaigns')">
+      <span class="nav-icon">📋</span> Campaigns
+    </div>
+    <div class="nav-item" id="nav-leads" onclick="showScreen('leads')">
+      <span class="nav-icon">👥</span> Leads
+    </div>
+    <div class="nav-item" id="nav-call-center" onclick="showScreen('call-center')">
+      <span class="nav-icon">📞</span> Call Center
+    </div>
+    <div class="nav-item" id="nav-kb" onclick="showScreen('campaigns')">
+      <span class="nav-icon">📚</span> Knowledge Base
+    </div>
+    <div class="nav-item" id="nav-analytics" onclick="showScreen('analytics')">
+      <span class="nav-icon">📊</span> Analytics
+    </div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-bottom-item" onclick="showScreen('phone-numbers')" style="cursor:pointer">⚙️ Settings</div>
+    <div class="sidebar-bottom-item">
+      <div class="avatar sm" style="background:#1f2937;color:#9ca3af">H</div>
+      11x AI · hemant@11x.ai
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Campaigns</div>
+    <div class="topbar-right">
+      <div class="topbar-badge urgent" onclick="showScreen('leads')" title="Open Leads">
+        📞 Needs Follow-up <span class="count">12</span>
+      </div>
+      <div class="topbar-badge">
+        ⏳ Pending Approval <span class="count">19264</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ======================== SCREEN: LEADS ======================== -->
+    <div class="screen" id="screen-leads">
+      <div class="leads-layout">
+        <div class="leads-main">
+          <!-- Top tabs -->
+          <div class="leads-tabs">
+            <div class="leads-tab active">Hot Leads</div>
+            <div class="leads-tab">Campaign Leads</div>
+            <div class="leads-tab">Website Visitors</div>
+          </div>
+          <!-- Sub-tabs -->
+          <div class="leads-sub-tabs">
+            <div class="sub-tab active">Needs Follow-up <span class="sub-count">13</span></div>
+            <div class="sub-tab">All Hot Leads</div>
+          </div>
+          <!-- Filter bar -->
+          <div class="leads-filter-bar" id="leadsFilterBar">
+            <div class="filter-chip" style="font-size:12px">📅 Date</div>
+            <div class="active-filter-chip" style="background:#fff;color:#333;border-color:#e8e8e8">Last 30 Days ▾</div>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFilterDrop()" id="addFilterBtn">＋ Add Filter</button>
+            <!-- Active filter chips (shown when filters applied) -->
+            <div id="activeFilters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            <!-- Filter dropdown -->
+            <div class="filter-dropdown hidden" id="filterDropdown">
+              <div class="filter-search"><input placeholder="Search Filters…" type="text" oninput="filterSearch(this.value)"></div>
+              <div class="filter-opt" id="fopt-group" onclick="applyFilter('group')"><span class="filter-opt-icon">🏷</span> Group</div>
+              <div class="filter-opt" id="fopt-campaign" onclick="applyFilter('campaign')"><span class="filter-opt-icon">📋</span> Campaign</div>
+              <div class="filter-opt" id="fopt-sender" onclick="applyFilter('sender')"><span class="filter-opt-icon">👤</span> Sender</div>
+              <!-- Status with sub-options -->
+              <div class="filter-opt" id="fopt-status" onclick="toggleSubFilter('status-sub')" style="justify-content:space-between">
+                <span><span class="filter-opt-icon">⬤</span> Status</span><span style="font-size:11px;color:#aaa">▾</span>
+              </div>
+              <div id="status-sub" class="filter-sub hidden">
+                <div class="filter-sub-opt" onclick="applyFilterVal('status','copilot')">🤖 Co-pilot</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('status','negative-reply')">👎 Negative Reply</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('status','positive-reply')">👍 Positive Reply</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('status','unreachable')">📵 Unreachable</div>
+                <div class="filter-sub-opt" onclick="applyStatusDialer()" style="color:#0f766e;font-weight:600">📞 Dialer <span style="font-size:10px;background:#f0fdf9;color:#0f766e;border:1px solid #99f6e4;border-radius:4px;padding:1px 5px;margin-left:4px">Call Step Due</span></div>
+                <div class="filter-sub-opt" onclick="applyStatusDialerBH()" style="padding-left:28px;color:#0f766e;font-size:12px">└ 📅 Business Hours Only <span style="color:#aaa;font-weight:400">(8am–6pm)</span></div>
+              </div>
+              <div class="filter-opt" id="fopt-last-message" onclick="applyFilter('last-message')"><span class="filter-opt-icon">✉️</span> Last Message</div>
+              <!-- Recent Activity with sub-options -->
+              <div class="filter-opt" id="fopt-activity" onclick="toggleSubFilter('activity-sub')" style="justify-content:space-between">
+                <span><span class="filter-opt-icon">⚡</span> Recent Activity</span><span style="font-size:11px;color:#aaa">▾</span>
+              </div>
+              <div id="activity-sub" class="filter-sub hidden">
+                <div class="filter-sub-opt" onclick="applyFilterVal('activity','email-opened')">✉️ Email Opened</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('activity','clicked-cta')">📱 Clicked CTA</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('activity','linkedin-viewed')">💼 LinkedIn Viewed</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('activity','replied')">↩ Replied</div>
+                <div class="filter-sub-opt" onclick="applyFilterVal('activity','none')" style="color:#bbb">— No Recent Activity</div>
+              </div>
+              <!-- V2 scoring note -->
+              <div style="padding:8px 14px;border-top:1px solid #f0f0f0;margin-top:4px">
+                <div style="font-size:11px;color:#bbb;display:flex;align-items:center;gap:4px">
+                  <span style="background:#f3f4f6;color:#aaa;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700">V2</span>
+                  Score = Timing × Number Quality × Activity Decay
+                </div>
+              </div>
+            </div>
+            <div class="ml-auto" style="display:flex;gap:8px;align-items:center">
+              <div class="leads-search">🔍 Search by contact name or company</div>
+              <button class="btn btn-secondary btn-sm">⊞ Display</button>
+              <button class="btn btn-secondary btn-sm">⬇</button>
+              <button id="masterDialerBtn"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1.5px solid #d1d5db;background:#f9fafb;color:#6b7280;font-size:13px;font-weight:600;cursor:not-allowed;opacity:.5;transition:all .2s"
+                onclick="openDialerSession(event)"
+                onmouseenter="showDialerTooltip()"
+                title="">
+                📞 Dialer
+              </button>
+            </div>
+          </div>
+
+          <!-- Dialer session setup modal -->
+          <div id="dialerSessionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center">
+            <div style="background:#fff;border-radius:14px;padding:28px;width:440px;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative">
+              <div style="font-size:17px;font-weight:700;color:#111;margin-bottom:4px">Start Dialer Session</div>
+              <div id="dialerLeadCount" style="font-size:13px;color:#555;margin-bottom:20px">0 call-due leads selected</div>
+
+              <!-- Mode cards -->
+              <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Select Dial Mode</div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+                <div class="session-mode-card selected" id="smPower" onclick="selectSessionMode('power')">
+                  <div style="display:flex;align-items:flex-start;gap:10px">
+                    <div style="width:16px;height:16px;border-radius:50%;border:2px solid #0d9488;margin-top:1px;display:flex;align-items:center;justify-content:center" id="smPowerRadio">
+                      <div style="width:8px;height:8px;border-radius:50%;background:#0d9488"></div>
+                    </div>
+                    <div>
+                      <div style="font-weight:600;font-size:13px">⚡ Power Dial</div>
+                      <div style="font-size:12px;color:#666;margin-top:2px">Auto-advances to next lead after each call. ~20% more dials per hour.</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="session-mode-card" id="smParallel" onclick="selectSessionMode('parallel')">
+                  <div style="display:flex;align-items:flex-start;gap:10px">
+                    <div style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;margin-top:1px;display:flex;align-items:center;justify-content:center" id="smParallelRadio"></div>
+                    <div>
+                      <div style="font-weight:600;font-size:13px">🚀 Parallel Dial</div>
+                      <div style="font-size:12px;color:#666;margin-top:2px">Dials N leads simultaneously. First to answer connects.</div>
+                      <div id="smParallelControls" style="display:none;margin-top:8px;display:none;align-items:center;gap:8px">
+                        <span style="font-size:12px;color:#555">Lines:</span>
+                        <button class="btn btn-ghost btn-sm" onclick="changeSessionLines(-1,event)">−</button>
+                        <span id="smLinesVal" style="font-weight:700;width:20px;text-align:center">3</span>
+                        <button class="btn btn-ghost btn-sm" onclick="changeSessionLines(1,event)">+</button>
+                        <span style="font-size:11px;color:#aaa">(max 10)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Autopilot toggle (V2.2) -->
+              <div style="border-top:1px solid #f0f0f0;margin:16px -4px 16px;padding-top:16px">
+                <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Automation <span style="background:#f3f4f6;color:#aaa;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;vertical-align:middle;margin-left:2px">V2</span></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid #e8e8e8;border-radius:10px;opacity:.65">
+                  <div style="display:flex;align-items:center;margin-top:1px">
+                    <div style="width:36px;height:20px;border-radius:10px;background:#d1d5db;position:relative;cursor:not-allowed" id="autopilotToggle" onclick="toggleAutopilot()">
+                      <div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)" id="autopilotThumb"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="font-weight:600;font-size:13px;color:#555">Autopilot Mode</div>
+                    <div style="font-size:12px;color:#888;margin-top:2px">System auto-applies the default scenario action. You can still override after each call.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-teal" style="flex:1;justify-content:center;font-size:14px" onclick="startDialerSession()">▶ Start Session</button>
+                <button class="btn btn-secondary" style="padding:8px 16px" onclick="closeDialerModal()">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="leads-table-wrap">
+            <table class="leads-table">
+              <thead>
+                <tr>
+                  <th style="width:32px" onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></th>
+                  <th>Contact Name ↕</th>
+                  <th>Role ↕</th>
+                  <th>Company ↕</th>
+                  <th>Outreach Sender</th>
+                  <th>Status</th>
+                  <th>Recent Activity</th>
+                  <th>Last Message</th>
+                  <th>Time ↕</th>
+                  <th>Campaign ↕</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- NON-CALL-DUE rows -->
+                <tr onclick="openLeadPanel('julie')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#0f4c81">JN</div><span class="lead-contact-name">Julie Naugler</span></div></td>
+                  <td style="color:#555;font-size:12px">Senior Sales Leader at Halifa…</td>
+                  <td>Halifax Tides FC</td>
+                  <td><span class="sender-badge">MS</span></td>
+                  <td><span class="lead-status-info status-bounced">⊗ Bounced</span></td>
+                  <td><span class="activity-signal act-email">✉️ Opened email · 1h ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>Email sent</span></div></td>
+                  <td style="font-size:12px;color:#888">Feb 24, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">Sports Leagues - MS ↗</td>
+                </tr>
+                <tr class="selected-row" onclick="openLeadPanel('abby')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" checked style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#f59e0b">AL</div><span class="lead-contact-name">Abby Landes</span></div></td>
+                  <td style="color:#555;font-size:12px">Head Of Sales</td>
+                  <td>Vyten</td>
+                  <td><span class="sender-badge">MS</span></td>
+                  <td><span class="lead-status-info status-info-req">📋 Information Request</span></td>
+                  <td><span class="activity-signal act-linkedin">💼 LinkedIn viewed · 3h ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>↩ Email received</span></div></td>
+                  <td style="font-size:12px;color:#888">Mar 16, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">Metaphor Based Test ↗</td>
+                </tr>
+                <!-- CALL-DUE rows (has-dialer class) -->
+                <tr class="has-dialer" onclick="openLeadPanel('chad')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#f97316">CC</div><span class="lead-contact-name">Chad Couture</span></div></td>
+                  <td style="color:#555;font-size:12px">VP, Solect Energy</td>
+                  <td>Solect Energy</td>
+                  <td><span class="sender-badge" style="background:#dbeafe;color:#1e40af">AF</span></td>
+                  <td><div><span class="lead-status-info status-call-due">📞 Call Step Due</span><div style="font-size:10px;color:#888;margin-top:2px">Seq. Step 3 · Phone</div></div></td>
+                  <td><span class="activity-signal act-clicked">📱 Clicked CTA · 30m ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>↩ Email received</span></div></td>
+                  <td style="font-size:12px;color:#888">Mar 2, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">AF- Julian Sol…nels- US + CA ↗</td>
+                </tr>
+                <tr class="has-dialer" onclick="openLeadPanel('gavin')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#1e3a5f">GW</div><span class="lead-contact-name">Gavin Wilmot</span></div></td>
+                  <td style="color:#555;font-size:12px">Global Sales Leader | Scaling…</td>
+                  <td>Engineered Arts</td>
+                  <td><span class="sender-badge" style="background:#f3f4f6;color:#374151">WK</span></td>
+                  <td><div><span class="lead-status-info status-call-due">📞 Call Step Due</span><div style="font-size:10px;color:#888;margin-top:2px">Seq. Step 5 · Phone</div></div></td>
+                  <td><span class="activity-signal act-email">✉️ Opened email · 2h ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>Email sent</span></div></td>
+                  <td style="font-size:12px;color:#888">Feb 26, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">Sales Leaders …panies - 1.26 ↗</td>
+                </tr>
+                <tr onclick="openLeadPanel('thomas')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#6b7280">TM</div><span class="lead-contact-name">Thomas Meyer</span></div></td>
+                  <td style="color:#555;font-size:12px">AI transformation for CFOs &amp; …</td>
+                  <td>Amyam GmbH</td>
+                  <td><span class="sender-badge" style="background:#f3f4f6;color:#374151">WK</span></td>
+                  <td><span class="lead-status-info status-info-req">📋 Information Request</span></td>
+                  <td><span class="activity-signal act-none">— No recent activity</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>↩ Email received</span></div></td>
+                  <td style="font-size:12px;color:#888">Mar 3, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">EMEA - Concise - CRO/CSO ↗</td>
+                </tr>
+                <tr onclick="openLeadPanel('sarah')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#0d9488">SC</div><span class="lead-contact-name">Sarah Chen</span></div></td>
+                  <td style="color:#555;font-size:12px">Head of Sales</td>
+                  <td>TechCorp Inc.</td>
+                  <td><span class="sender-badge" style="background:#f3f4f6;color:#374151">WK</span></td>
+                  <td><span class="lead-status-info status-info-req">📋 Information Request</span></td>
+                  <td><span class="activity-signal act-replied">↩ Replied · 5m ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">📞</div><span style="color:#ea580c;font-weight:500">Call attempt</span><span class="signal-badge signal-hot" style="font-size:10px;margin-left:4px">🔥</span></div></td>
+                  <td style="font-size:12px;color:#888">Mar 16, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">Cold Outbound — Q1 ↗</td>
+                </tr>
+                <tr class="has-dialer" onclick="openLeadPanel('dan')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#2d4a3e">DS</div><span class="lead-contact-name">Dan Strauss</span></div></td>
+                  <td style="color:#555;font-size:12px">VP Of Sales</td>
+                  <td>Avarra</td>
+                  <td><span class="sender-badge" style="background:#f3f4f6;color:#374151">WK</span></td>
+                  <td><div><span class="lead-status-info status-call-due">📞 Call Step Due</span><div style="font-size:10px;color:#888;margin-top:2px">Seq. Step 4 · Phone</div></div></td>
+                  <td><span class="activity-signal act-linkedin">💼 LinkedIn visit · 1h ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>Email sent</span></div></td>
+                  <td style="font-size:12px;color:#888">Mar 6, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">Sales Leaders …panies - 1.26 ↗</td>
+                </tr>
+                <!-- No-phone call-due lead (V1.2 — enriching state) -->
+                <tr class="has-dialer" onclick="openLeadPanel('marcus')" style="opacity:.75">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()" disabled title="Awaiting phone enrichment"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#6b7280">MJ</div><span class="lead-contact-name">Marcus Johnson</span></div></td>
+                  <td style="color:#555;font-size:12px">VP Revenue</td>
+                  <td>GrowthCo</td>
+                  <td><span class="sender-badge" style="background:#f3f4f6;color:#374151">AL</span></td>
+                  <td><div><span class="lead-status-info status-call-due">📞 Call Step Due</span><div style="font-size:10px;color:#f59e0b;margin-top:2px">⏳ Enriching phone… step skipped until found</div></div></td>
+                  <td><span class="activity-signal act-email">✉️ Opened email · 6h ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>Email sent</span></div></td>
+                  <td style="font-size:12px;color:#888">Mar 14, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">Cold Outbound — Q1 ↗</td>
+                </tr>
+                <tr onclick="openLeadPanel('jack')">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#0d9488" onchange="updateDialerBtn()"></td>
+                  <td><div class="lead-contact"><div class="lead-contact-avatar" style="background:#7c3aed">JS</div><span class="lead-contact-name">Jack Stevens</span></div></td>
+                  <td style="color:#555;font-size:12px">Sales &amp; Marketing Operations…</td>
+                  <td>Zenopa</td>
+                  <td><span class="sender-badge" style="background:#dbeafe;color:#1e40af">JB</span></td>
+                  <td><span class="lead-status-info status-info-req">📋 Information Request</span></td>
+                  <td><span class="activity-signal act-email">✉️ Opened email · 4h ago</span></td>
+                  <td><div class="last-msg-cell"><div class="last-msg-icon">✉️</div><span>↩ Email received</span></div></td>
+                  <td style="font-size:12px;color:#888">Feb 23, 2026</td>
+                  <td style="font-size:12px;color:#2563eb;cursor:pointer">RevOps - 2.2 ↗</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE PANEL -->
+        <div class="leads-side-panel hidden" id="leadSidePanel">
+          <div class="side-panel-header">
+            <div class="side-panel-campaign">
+              <span style="color:#888">Campaigns (1):</span>
+              <span id="spCampaign" style="font-weight:500">Metaphor Based Test</span>
+              <span style="color:#ccc">▾</span>
+              <div class="side-panel-nav" style="margin-left:auto">
+                <div class="side-nav-btn">∧</div>
+                <div class="side-nav-btn">∨</div>
+                <div class="side-nav-btn" onclick="closeLeadPanel()">⇥</div>
+              </div>
+            </div>
+            <div class="side-panel-lead-row">
+              <div class="side-panel-avatar" id="spAvatar" style="background:#f59e0b">AL</div>
+              <div style="flex:1">
+                <div class="side-panel-name">
+                  <span id="spName">Abby Landes</span>
+                  <span style="font-size:14px">💼</span>
+                  <span style="font-size:13px">✉️</span>
+                  <span style="font-size:13px">🌐</span>
+                  <span style="font-size:13px">📞</span>
+                  <button class="btn btn-secondary btn-sm" style="margin-left:4px;font-size:11px">✨ Enrich</button>
+                </div>
+                <div class="side-panel-role" id="spRole">Head Of Sales</div>
+                <div style="font-size:12px;color:#888" id="spCompany">Vyten</div>
+              </div>
+            </div>
+            <div class="side-panel-actions">
+              <span class="side-tag side-tag-sender">MS Matt Sonderman</span>
+              <span class="side-tag side-tag-status" id="spStatusTag">📋 Information Request</span>
+              <span class="side-tag side-tag-hot">🔥 Hot Lead ×</span>
+            </div>
+            <div class="side-panel-btns" style="margin-top:10px">
+              <span class="side-tag side-tag-follow">📋 Needs follow-up ×</span>
+              <button class="btn btn-secondary btn-sm">↩ Reply to Message</button>
+              <button class="btn btn-secondary btn-sm">＋ Add to campaign</button>
+              <button class="btn btn-ghost btn-sm">···</button>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="side-panel-tabs">
+            <div class="side-panel-tab active" onclick="switchSPTab(this,'sp-sequence')">Sequence</div>
+            <div class="side-panel-tab" onclick="switchSPTab(this,'sp-activity')">Activity</div>
+            <div class="side-panel-tab" onclick="switchSPTab(this,'sp-lead-info')">Lead Information</div>
+            <div class="side-panel-tab" onclick="switchSPTab(this,'sp-research')">Research</div>
+          </div>
+
+          <!-- Sequence tab -->
+          <div id="sp-sequence" class="side-panel-body">
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <div class="sub-tab active" style="font-size:11px">✉️ Email <strong>4</strong></div>
+              <div class="sub-tab" style="font-size:11px">💼 LinkedIn <strong>0</strong></div>
+              <div class="sub-tab" style="font-size:11px">📞 Calls <strong>1</strong></div>
+              <select style="margin-left:auto;border:1px solid #e8e8e8;border-radius:6px;font-size:11px;padding:3px 6px;color:#555">
+                <option>Sort by: Most Recent</option>
+              </select>
+            </div>
+            <div style="text-align:center;padding:8px;font-size:12px;color:#2563eb;cursor:pointer">↓ Scroll to sequence email #1</div>
+            <div class="seq-item">
+              <div class="seq-icon" style="background:#eff6ff;color:#2563eb">✉️</div>
+              <div class="seq-content">
+                <div class="seq-title"><span>Sequence email #1 · <span style="color:#888;font-size:11px">0 opens · 0 clicks · 1 reply</span></span><span style="font-size:11px;color:#888">Sent 4h ago</span></div>
+                <div style="font-size:11px;color:#888;margin-top:3px">Matt Sonderman matt@boost11x.com → To: Abby Landes abby@vyten.com</div>
+                <div class="seq-body"><strong>Fast apps, slow pipeline?</strong></div>
+              </div>
+            </div>
+            <!-- Dialer section — only shown for call-due leads -->
+            <div class="dialer-section" id="sp-dialer-section" style="margin-top:16px;border-radius:10px;display:none">
+              <div class="dialer-section-title">📞 Call This Lead</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <div style="font-size:13px;font-weight:500;color:#111" id="spPhoneNum">📱 +1 (415) 555-0192</div>
+                <span class="signal-badge signal-hot" style="font-size:10px" id="spCallSignal">🔥 Pricing page 12m ago</span>
+              </div>
+              <div style="font-size:11px;color:#888;margin-bottom:12px">
+                Score: <strong style="color:#0d9488" id="spCallScore">94</strong> · Timing × Number Quality × Activity Decay
+              </div>
+              <button id="spCallBtn" class="btn btn-teal" style="width:100%;justify-content:center;font-size:14px" onclick="showScreen('active-call')">
+                📞 Call This Lead
+              </button>
+              <div style="margin-top:8px;font-size:11px;color:#999;text-align:center;line-height:1.5">
+                💡 One-off call only.<br>To run a Power or Parallel session, select leads and click <strong>Dialer</strong> above.
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity tab -->
+          <div id="sp-activity" class="side-panel-body" style="display:none">
+            <div class="activity-item">
+              <div class="activity-icon act-call">📞</div>
+              <div><div class="activity-text">Call attempt — No Answer (VM left)</div><div class="activity-time">2 days ago</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon act-email">✉️</div>
+              <div><div class="activity-text">Reply received · Information Request</div><div class="activity-time">1 hour ago</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon act-email">✉️</div>
+              <div><div class="activity-text">Sequence email #1 sent · 1 reply</div><div class="activity-time">4 hours ago</div></div>
+            </div>
+          </div>
+
+          <!-- Lead Info tab -->
+          <div id="sp-lead-info" class="side-panel-body" style="display:none">
+            <div class="info-row"><div class="info-label">Name</div><div class="info-val" id="spInfoName">Abby Landes</div></div>
+            <div class="info-row"><div class="info-label">Title</div><div class="info-val" id="spInfoRole">Head Of Sales</div></div>
+            <div class="info-row"><div class="info-label">Company</div><div class="info-val" id="spInfoCompany">Vyten</div></div>
+            <div class="info-row"><div class="info-label">Email</div><div class="info-val">abby@vyten.com</div></div>
+            <div class="info-row"><div class="info-label">Phone</div><div class="info-val">+1 (415) 555-0192</div></div>
+            <div class="info-row"><div class="info-label">LinkedIn</div><div class="info-val"><a class="info-link" href="#">View Profile →</a></div></div>
+            <div class="divider"></div>
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:8px">Company Info</div>
+            <div class="info-row"><div class="info-label">Size</div><div class="info-val">50–200 employees</div></div>
+            <div class="info-row"><div class="info-label">Industry</div><div class="info-val">B2B SaaS</div></div>
+            <div class="info-row"><div class="info-label">Tech Stack</div><div class="info-val">HubSpot, Slack, Notion</div></div>
+          </div>
+
+          <!-- Research tab -->
+          <div id="sp-research" class="side-panel-body" style="display:none">
+            <div class="research-block"><div class="research-block-title">Role Context</div><div class="research-block-text">Abby joined Vyten as Head of Sales 3 months ago. Building outbound from scratch with a team of 4 SDRs.</div></div>
+            <div class="research-block"><div class="research-block-title">Why Engage Now</div><div class="research-block-text">Replied asking about pricing — clear buying intent. High-priority window to call within 2 hours of reply.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SCREEN 1: CAMPAIGNS ======================== -->
+    <div class="screen active" id="screen-campaigns">
+      <div class="metrics-bar">
+        <div class="metric-card">
+          <div class="metric-label">👤 Leads Contacted</div>
+          <div class="metric-value">9,674</div>
+          <div class="metric-sub">Scheduled: 16</div>
+          <svg class="sparkline" viewBox="0 0 120 32"><polyline points="0,28 20,22 40,20 60,24 80,14 100,18 120,16" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">↩ Positive Replies</div>
+          <div class="metric-value">32</div>
+          <div class="metric-sub">&nbsp;</div>
+          <svg class="sparkline" viewBox="0 0 120 32"><polyline points="0,26 20,20 40,22 60,16 80,20 100,14 120,18" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">📅 Meetings Requested</div>
+          <div class="metric-value">15</div>
+          <div class="metric-sub">&nbsp;</div>
+          <svg class="sparkline" viewBox="0 0 120 32"><polyline points="0,28 20,18 40,26 60,12 80,22 100,10 120,16" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">☎️ Calls Today</div>
+          <div class="metric-value">47</div>
+          <div class="metric-sub">Connect rate: 9.4%</div>
+          <svg class="sparkline" viewBox="0 0 120 32"><polyline points="0,28 20,24 40,20 60,22 80,16 100,12 120,10" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-chip">📅 Date · All Time ▾</div>
+        <div class="filter-chip">＋ Add Filter</div>
+        <div class="ml-auto" style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm">Manage Groups</button>
+          <button class="btn btn-secondary btn-sm">⊞ Display</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search-input">🔍 Search Campaigns</div>
+        <button class="btn btn-teal" onclick="showScreen('campaign-creation')">＋ Add Call Step</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:32px"><div class="checkbox"></div></th>
+            <th>Campaign Name</th>
+            <th>Sourcing Health</th>
+            <th>Campaign Owner</th>
+            <th>Leads Contacted</th>
+            <th>Positive Replies</th>
+            <th>Call Steps</th>
+            <th>Published At</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="checkbox"></div></td>
+            <td><span class="campaign-name" onclick="showScreen('campaign-creation')">CSV Campaign</span></td>
+            <td><span class="health-badge health-complete"><span class="health-dot"></span>Complete</span></td>
+            <td><div class="owner-avatar">A</div></td>
+            <td class="text-muted">—</td><td class="text-muted">—</td>
+            <td><span class="tag">1 call step</span></td>
+            <td class="text-muted">3 days ago</td>
+            <td><span class="status-badge status-active">Active</span></td>
+          </tr>
+          <tr>
+            <td><div class="checkbox"></div></td>
+            <td><span class="campaign-name">CSV Campaign aizen</span></td>
+            <td><span class="health-badge health-complete"><span class="health-dot"></span>Complete</span></td>
+            <td><div class="owner-avatar">A</div></td>
+            <td class="text-muted">—</td><td class="text-muted">—</td>
+            <td><span class="tag" style="background:#fff7ed;color:#c2410c">2 call steps</span></td>
+            <td class="text-muted">3 days ago</td>
+            <td><span class="status-badge status-active">Active</span></td>
+          </tr>
+          <tr>
+            <td><div class="checkbox"></div></td>
+            <td><span class="campaign-name">Scout-Juan-Test-Campaign</span></td>
+            <td><span class="health-badge health-monitoring"><span class="health-dot"></span>Monitoring</span></td>
+            <td><div class="owner-avatar" style="background:#1e3a5f">SD</div></td>
+            <td class="text-muted">—</td><td class="text-muted">—</td>
+            <td><span class="text-muted text-sm">—</span></td>
+            <td class="text-muted">6 days ago</td>
+            <td><span class="status-badge status-active">Active</span></td>
+          </tr>
+          <tr>
+            <td><div class="checkbox"></div></td>
+            <td><span class="campaign-name">Anthony-securis-regulated-test-scout</span></td>
+            <td><span class="health-badge health-excellent"><span class="health-dot"></span>Excellent</span></td>
+            <td><div class="owner-avatar" style="background:#1e3a5f">SD</div></td>
+            <td class="text-muted">—</td><td class="text-muted">—</td>
+            <td><span class="tag">1 call step</span></td>
+            <td class="text-muted">8 days ago</td>
+            <td><span class="status-badge status-active">Active</span></td>
+          </tr>
+          <tr>
+            <td><div class="checkbox"></div></td>
+            <td><span class="campaign-name">Test Query - IND Origin Startup Founders</span></td>
+            <td><span class="health-badge health-limited"><span class="health-dot"></span>Limited</span></td>
+            <td><div class="owner-avatar" style="background:#1e3a5f">SD</div></td>
+            <td class="text-muted">—</td><td class="text-muted">—</td>
+            <td><span class="text-muted text-sm">—</span></td>
+            <td class="text-muted">8 days ago</td>
+            <td><span class="status-badge status-active">Active</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ======================== SCREEN 2: CAMPAIGN CREATION ======================== -->
+    <div class="screen" id="screen-campaign-creation" style="flex-direction:column">
+      <div class="campaign-creation-header">
+        <button class="btn btn-ghost btn-sm" onclick="showScreen('campaigns')">✕ Cold outbound</button>
+        <span style="flex:1;text-align:center;font-size:15px;font-weight:600;color:#111">CSV Campaign ✏️</span>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary btn-sm">Save as draft</button>
+          <button class="btn btn-primary btn-sm">Next →</button>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab">Audience</div>
+        <div class="tab">Research</div>
+        <div class="tab active">Messaging</div>
+        <div class="tab">Settings</div>
+      </div>
+      <div class="campaign-body">
+        <div class="campaign-main">
+          <div class="section-header">CAMPAIGN MESSAGING</div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-size:12px;color:#555;line-height:1.5">
+              For the <strong>Cold Outbound</strong> play, Alice will highlight your solution's relevance to the prospect's specific pain points.
+            </div>
+          </div>
+          <div class="section-header">CUSTOMIZE MESSAGING</div>
+
+          <!-- Sequence instructions -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar sm" style="background:#f3f4f6;color:#555">A</div>
+                <span style="font-size:13px;font-weight:600">Sequence instructions</span>
+              </div>
+              <svg width="16" height="16" fill="none" stroke="#aaa" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div style="font-size:12px;color:#888">Provide Alice with additional instructions that apply to all messages</div>
+          </div>
+
+          <!-- Mode selector bar -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <button class="btn btn-secondary btn-sm" style="gap:6px">✨ Alice AI</button>
+            <button class="btn btn-secondary btn-sm">✏️ Template Mode</button>
+            <span style="font-size:18px;">🇺🇸</span>
+          </div>
+
+          <!-- Tab bar for sequences -->
+          <div style="display:flex;gap:0;border-bottom:1px solid #e8e8e8;margin-bottom:16px;">
+            <div style="padding:10px 14px;font-size:13px;font-weight:500;color:#111;border-bottom:2px solid #111;display:flex;align-items:center;gap:6px;">
+              ✉️ Email Sequence <span class="tag">3 Steps</span>
+            </div>
+            <div style="padding:10px 14px;font-size:13px;font-weight:500;color:#888;display:flex;align-items:center;gap:6px;">
+              💼 LinkedIn Sequence <span class="tag">1 Step</span>
+            </div>
+            <div style="padding:10px 14px;font-size:13px;font-weight:500;color:#ea580c;display:flex;align-items:center;gap:6px;border-bottom:2px solid #ea580c;">
+              📞 Call Steps <span class="tag" style="background:#fff7ed;color:#c2410c">1 Step</span>
+            </div>
+          </div>
+
+          <!-- Sequence steps -->
+          <div class="sequence-step">
+            <div class="sequence-step-header">
+              <div class="step-icon step-email">✉️</div>
+              <div>
+                <div class="step-label">Email #1</div>
+                <div class="step-sublabel">Day 1 · Introduction</div>
+              </div>
+              <div class="step-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🗑</button>
+              </div>
+            </div>
+          </div>
+          <div class="sequence-connector"></div>
+
+          <div class="sequence-step">
+            <div class="sequence-step-header">
+              <div class="step-icon step-linkedin">💼</div>
+              <div>
+                <div class="step-label">LinkedIn Connection</div>
+                <div class="step-sublabel">Day 3 · Connect request</div>
+              </div>
+              <div class="step-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🗑</button>
+              </div>
+            </div>
+          </div>
+          <div class="sequence-connector"></div>
+
+          <!-- CALL STEP (highlighted) -->
+          <div class="sequence-step call-step">
+            <div class="sequence-step-header">
+              <div class="step-icon step-call">📞</div>
+              <div>
+                <div class="step-label">Call #1 — Signal-triggered</div>
+                <div class="step-sublabel">Day 5 · Power dial · VM drop enabled</div>
+              </div>
+              <div class="step-actions">
+                <span class="signal-badge signal-hot" style="font-size:11px">🔥 Intent trigger</span>
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🗑</button>
+              </div>
+            </div>
+            <div class="call-branch">
+              <div style="font-size:11px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Branching Logic</div>
+              <div class="branch-row">
+                <div class="branch-outcome">✅ Interested / Meeting</div>
+                <div class="branch-arrow">→</div>
+                <div class="branch-action">Pause all future steps · Log to CRM</div>
+              </div>
+              <div class="branch-row">
+                <div class="branch-outcome">❌ Not Interested</div>
+                <div class="branch-arrow">→</div>
+                <div class="branch-action">Pause sequence · Tag lead</div>
+              </div>
+              <div class="branch-row">
+                <div class="branch-outcome">📩 Left Voicemail</div>
+                <div class="branch-arrow">→</div>
+                <div class="branch-action">Continue · Next email refs VM</div>
+              </div>
+              <div class="branch-row">
+                <div class="branch-outcome">📵 No Answer</div>
+                <div class="branch-arrow">→</div>
+                <div class="branch-action">Continue · Re-queue next call step</div>
+              </div>
+              <div class="branch-row">
+                <div class="branch-outcome">🔀 Call Back Later</div>
+                <div class="branch-arrow">→</div>
+                <div class="branch-action">Snooze call steps · Email continues</div>
+              </div>
+            </div>
+          </div>
+          <div class="sequence-connector"></div>
+
+          <div class="sequence-step">
+            <div class="sequence-step-header">
+              <div class="step-icon step-email">✉️</div>
+              <div>
+                <div class="step-label">Email #2</div>
+                <div class="step-sublabel">Day 7 · Follow-up</div>
+              </div>
+              <div class="step-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🗑</button>
+              </div>
+            </div>
+          </div>
+          <div class="sequence-connector"></div>
+
+          <div class="sequence-step">
+            <div class="sequence-step-header">
+              <div class="step-icon step-email">✉️</div>
+              <div>
+                <div class="step-label">Email #3 — Last touch</div>
+                <div class="step-sublabel">Day 12 · Break-up</div>
+              </div>
+              <div class="step-actions">
+                <button class="btn btn-ghost btn-sm">✏️</button>
+                <button class="btn btn-ghost btn-sm">🗑</button>
+              </div>
+            </div>
+          </div>
+          <div class="sequence-connector"></div>
+
+          <!-- Add step row -->
+          <div class="add-step-row">
+            <div class="add-step-line"></div>
+            <button class="add-step-btn">
+              ＋ Add step
+            </button>
+            <button class="add-step-btn" style="border-color:#ea580c;color:#ea580c;background:#fff7ed;" onclick="alert('Call step added! Configure voicemail and branching logic above.')">
+              📞 Add Call Step
+            </button>
+            <div class="add-step-line"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL: Preview -->
+        <div class="campaign-preview">
+          <div style="padding:16px">
+            <div class="section-header">EXAMPLE LEAD RESEARCH</div>
+            <div class="card" style="margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <div class="avatar lg" style="background:#1e3a5f;color:#93c5fd">KW</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600">Kordell Wiley 💼</div>
+                  <div style="font-size:12px;color:#666">Head Of Sales</div>
+                  <div style="font-size:12px;color:#888">American Veneer Edgebanding</div>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Call Priority Signals</div>
+              <div class="signal-badges">
+                <span class="signal-badge signal-hot">🔥 Pricing page 12m ago</span>
+                <span class="signal-badge signal-warm">📧 Email opened 3×</span>
+              </div>
+              <div class="divider"></div>
+              <div style="font-size:11px;color:#555;line-height:1.5">
+                Kordell recently joined American Veneer as Head of Sales (2 months ago) and is actively building out their outbound motion. They recently expanded to 3 new territories.
+              </div>
+            </div>
+            <div style="padding:10px 14px;background:#fff3cd;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e">
+              ⚡ Pre-loading call context for all leads before session starts. Context panel ready in &lt;2s when call connects.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRE-SESSION SCREEN REMOVED — now integrated into Leads side panel -->
+    <!-- ======================== SCREEN 3: PRE-SESSION BRIEF (HIDDEN) ======================== -->
+    <div class="screen" id="screen-pre-session">
+      <div class="dialer-layout">
+        <!-- Left config panel -->
+        <div class="dialer-left">
+          <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:14px">Session Setup</div>
+
+          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Dialing Mode</div>
+          <div class="mode-selector">
+            <div class="mode-option" onclick="selectMode(this,'one-off')">
+              <div class="mode-option-header">
+                <div class="mode-radio"></div>
+                <div class="mode-name">One-off</div>
+              </div>
+              <div class="mode-desc">Full control. Click to dial one lead at a time.</div>
+            </div>
+            <div class="mode-option selected" onclick="selectMode(this,'power')">
+              <div class="mode-option-header">
+                <div class="mode-radio"></div>
+                <div class="mode-name">⚡ Power Dial</div>
+              </div>
+              <div class="mode-desc">Auto-advances to next lead. ~20% more dials.</div>
+            </div>
+            <div class="mode-option" onclick="selectMode(this,'parallel')">
+              <div class="mode-option-header">
+                <div class="mode-radio"></div>
+                <div class="mode-name">🚀 Parallel Dial</div>
+              </div>
+              <div class="mode-desc">Dials N leads simultaneously. First to answer connects.</div>
+              <div class="parallel-control">
+                <button class="parallel-btn" onclick="changeParallel(-1,event)">−</button>
+                <div class="parallel-val" id="parallelVal">3</div>
+                <button class="parallel-btn" onclick="changeParallel(1,event)">+</button>
+                <span style="font-size:11px;color:#888">lines</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Filters</div>
+
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;color:#555;margin-bottom:5px;font-weight:500">Campaign</div>
+            <select style="width:100%;padding:7px 10px;border:1px solid #e8e8e8;border-radius:7px;font-size:12px;color:#333;background:#fff;outline:none">
+              <option>All Campaigns</option>
+              <option>CSV Campaign</option>
+              <option selected>Cold Outbound — Q1</option>
+              <option>Re-engage Inactive</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;color:#555;margin-bottom:5px;font-weight:500">Timezone</div>
+            <select style="width:100%;padding:7px 10px;border:1px solid #e8e8e8;border-radius:7px;font-size:12px;color:#333;background:#fff;outline:none">
+              <option selected>All Timezones</option>
+              <option>US East Coast</option>
+              <option>US West Coast</option>
+              <option>UK / EU</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;color:#555;margin-bottom:5px;font-weight:500">Signal Priority</div>
+            <select style="width:100%;padding:7px 10px;border:1px solid #e8e8e8;border-radius:7px;font-size:12px;color:#333;background:#fff;outline:none">
+              <option selected>Intent signals first</option>
+              <option>New job titles first</option>
+              <option>Funding events first</option>
+              <option>Sequence order</option>
+            </select>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:11px;color:#888;line-height:1.5">
+            💡 Calling right people at the right time. Leads ranked by likelihood to answer and convert.
+          </div>
+        </div>
+
+        <!-- Main session content -->
+        <div class="dialer-center">
+          <div class="session-list">
+            <div class="session-list-header">
+              <div>
+                <div class="session-list-title">Today's Call Queue</div>
+                <div style="font-size:12px;color:#888;margin-top:2px">12 leads · Sorted by signal strength · Pre-loading context...</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary btn-sm">Select All</button>
+                <button class="btn btn-teal btn-lg" onclick="showScreen('active-call')">▶ Start Session (12)</button>
+              </div>
+            </div>
+
+            <!-- Lead rows with signals -->
+            <div class="lead-row selected" onclick="showScreen('active-call')">
+              <div class="lead-check"><input type="checkbox" checked></div>
+              <div class="lead-info">
+                <div class="lead-name">Sarah Chen</div>
+                <div class="lead-role">Head of Sales · TechCorp Inc.</div>
+                <div class="lead-company">🇺🇸 San Francisco, CA · 11:02 AM local</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-hot">🔥 Pricing page 12 min ago</span>
+                  <span class="signal-badge signal-warm">📧 Email opened 3×/24h</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score">Score 98</div>
+                <div style="font-size:10px;color:#888">📱 Mobile</div>
+              </div>
+            </div>
+
+            <div class="lead-row selected" onclick="showScreen('active-call')">
+              <div class="lead-check"><input type="checkbox" checked></div>
+              <div class="lead-info">
+                <div class="lead-name">Marcus Johnson</div>
+                <div class="lead-role">VP Revenue · GrowthCo</div>
+                <div class="lead-company">🇺🇸 New York, NY · 2:02 PM local</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-social">🔗 Accepted LinkedIn connection</span>
+                  <span class="signal-badge signal-warm">📧 Email opened 2×</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score">Score 87</div>
+                <div style="font-size:10px;color:#888">📱 Mobile</div>
+              </div>
+            </div>
+
+            <div class="lead-row selected">
+              <div class="lead-check"><input type="checkbox" checked></div>
+              <div class="lead-info">
+                <div class="lead-name">Elena Vasquez</div>
+                <div class="lead-role">Director of BizDev · ScaleUp SaaS</div>
+                <div class="lead-company">🇺🇸 Austin, TX · 1:02 PM local</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-funding">💰 Series B — $24M (3 days ago)</span>
+                  <span class="signal-badge signal-job">💼 New role (6 weeks ago)</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score">Score 82</div>
+                <div style="font-size:10px;color:#888">☎️ Direct</div>
+              </div>
+            </div>
+
+            <div class="lead-row selected">
+              <div class="lead-check"><input type="checkbox" checked></div>
+              <div class="lead-info">
+                <div class="lead-name">James Okafor</div>
+                <div class="lead-role">Head of Sales Ops · CloudFirst</div>
+                <div class="lead-company">🇺🇸 Chicago, IL · 1:02 PM local</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-hot">🔥 G2 profile visited</span>
+                  <span class="signal-badge signal-social">💼 Liked your LinkedIn post</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score">Score 79</div>
+                <div style="font-size:10px;color:#888">📱 Mobile</div>
+              </div>
+            </div>
+
+            <div class="lead-row selected">
+              <div class="lead-check"><input type="checkbox" checked></div>
+              <div class="lead-info">
+                <div class="lead-name">Priya Sharma</div>
+                <div class="lead-role">Sales Manager · Nexus Labs</div>
+                <div class="lead-company">🇺🇸 Seattle, WA · 11:02 AM local</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-job">💼 New job (3 weeks ago)</span>
+                  <span class="signal-badge signal-warm">📧 Opened email · No reply</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score">Score 72</div>
+                <div style="font-size:10px;color:#888">☎️ Direct</div>
+              </div>
+            </div>
+
+            <div class="lead-row">
+              <div class="lead-check"><input type="checkbox"></div>
+              <div class="lead-info">
+                <div class="lead-name">Tom Bradwell</div>
+                <div class="lead-role">AE Director · Revera Inc.</div>
+                <div class="lead-company">🇬🇧 London, UK · 7:02 PM local — ⚠️ After hours</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-neutral">📅 Sequence step 4 — no signal</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score" style="background:#f3f4f6;color:#555">Score 31</div>
+                <div style="font-size:10px;color:#f59e0b">⚠️ After hours</div>
+              </div>
+            </div>
+
+            <div class="lead-row">
+              <div class="lead-check"><input type="checkbox"></div>
+              <div class="lead-info">
+                <div class="lead-name">Rachel Kim</div>
+                <div class="lead-role">VP Sales · DataStream</div>
+                <div class="lead-company">🇺🇸 Boston, MA · 2:02 PM local</div>
+                <div class="signal-badges">
+                  <span class="signal-badge signal-neutral">📅 Last step in sequence — no response</span>
+                </div>
+              </div>
+              <div class="lead-priority">
+                <div class="priority-score" style="background:#f3f4f6;color:#555">Score 28</div>
+                <div style="font-size:10px;color:#888">☎️ Direct</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SCREEN: CALL CENTER ======================== -->
+    <div class="screen" id="screen-call-center">
+      <div style="display:flex;flex-direction:column;height:100%;overflow:hidden">
+        <!-- Header -->
+        <div style="padding:14px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;background:#fff;flex-shrink:0">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:#111">Call Center</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">All calls due today · <span style="color:#0d9488;font-weight:600">3 call steps</span> · <span style="color:#ef4444;font-weight:600">2 overdue callbacks</span></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="font-size:12px;color:#888;background:#f5f5f5;padding:6px 12px;border-radius:8px">📅 Mon Mar 16, 2026</div>
+            <button id="ccDialerBtn" class="btn btn-secondary btn-sm" onclick="openDialerSession(event)" style="background:#0d9488;color:#fff;border-color:#0d9488">📞 Dialer · 5 leads</button>
+          </div>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding:20px 24px">
+
+          <!-- Overdue Callbacks -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div>
+              <div style="font-size:13px;font-weight:700;color:#111">Overdue Callbacks</div>
+              <div style="font-size:11px;background:#fee2e2;color:#b91c1c;border-radius:12px;padding:2px 8px;font-weight:600">2 overdue</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <!-- Overdue row: Dan -->
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid #fca5a5;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s" onclick="showScreen('active-call')" onmouseover="this.style.borderColor='#ef4444'" onmouseout="this.style.borderColor='#fca5a5'">
+                <div style="width:36px;height:36px;border-radius:50%;background:#0ea5e9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">DS</div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#111">Dan Strauss</div>
+                  <div style="font-size:12px;color:#666">Acme Corp · VP Revenue Operations</div>
+                  <div style="font-size:11px;color:#ef4444;margin-top:2px">⏰ 2h overdue · Callback from last week</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:12px;font-weight:600;color:#333">+1 (415) 555-0192</div>
+                  <div style="font-size:10px;background:#fee2e2;color:#b91c1c;border-radius:4px;padding:2px 6px;margin-top:3px;display:inline-block">Callback</div>
+                </div>
+                <button class="btn btn-teal btn-sm" onclick="event.stopPropagation();showScreen('active-call')" style="flex-shrink:0">📞 Call</button>
+              </div>
+              <!-- Overdue row: Sarah -->
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid #fca5a5;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s" onclick="showScreen('active-call')" onmouseover="this.style.borderColor='#ef4444'" onmouseout="this.style.borderColor='#fca5a5'">
+                <div style="width:36px;height:36px;border-radius:50%;background:#8b5cf6;color:#fff;display:flex;align-items:center;justify-content:font-size:13px;font-weight:700;flex-shrink:0;justify-content:center">SC</div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#111">Sarah Chen</div>
+                  <div style="font-size:12px;color:#666">TechCorp Inc. · Head of Sales</div>
+                  <div style="font-size:11px;color:#ef4444;margin-top:2px">⏰ 45m overdue · Snoozed callback</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:12px;font-weight:600;color:#333">+1 (415) 555-0182</div>
+                  <div style="font-size:10px;background:#fee2e2;color:#b91c1c;border-radius:4px;padding:2px 6px;margin-top:3px;display:inline-block">Callback</div>
+                </div>
+                <button class="btn btn-teal btn-sm" onclick="event.stopPropagation();showScreen('active-call')" style="flex-shrink:0">📞 Call</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Due Today: Sequence Steps -->
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#0d9488"></div>
+              <div style="font-size:13px;font-weight:700;color:#111">Due Today — Sequence Call Steps</div>
+              <div style="font-size:11px;background:#f0fdf9;color:#0f766e;border:1px solid #99f6e4;border-radius:12px;padding:2px 8px;font-weight:600">3 call steps</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <!-- Chad -->
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s" onclick="showScreen('active-call')" onmouseover="this.style.borderColor='#0d9488'" onmouseout="this.style.borderColor='#e8e8e8'">
+                <input type="checkbox" onclick="event.stopPropagation()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0">
+                <div style="width:36px;height:36px;border-radius:50%;background:#f97316;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">CC</div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#111">Chad Couture</div>
+                  <div style="font-size:12px;color:#666">Innovation Labs · Director of Strategy</div>
+                  <div style="font-size:11px;color:#0d9488;margin-top:2px">📱 Clicked CTA · 30m ago</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:12px;font-weight:600;color:#333">+1 (628) 555-0134</div>
+                  <div style="font-size:10px;background:#f0fdf9;color:#0f766e;border:1px solid #99f6e4;border-radius:4px;padding:2px 6px;margin-top:3px;display:inline-block">Seq. Step 3</div>
+                </div>
+                <div style="flex-shrink:0;text-align:right">
+                  <div style="font-size:11px;color:#aaa">Due now</div>
+                  <div style="font-size:12px;font-weight:700;color:#0f766e">96</div>
+                </div>
+                <button class="btn btn-teal btn-sm" onclick="event.stopPropagation();showScreen('active-call')" style="flex-shrink:0">📞 Call</button>
+              </div>
+              <!-- Gavin -->
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s" onclick="showScreen('active-call')" onmouseover="this.style.borderColor='#0d9488'" onmouseout="this.style.borderColor='#e8e8e8'">
+                <input type="checkbox" onclick="event.stopPropagation()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0">
+                <div style="width:36px;height:36px;border-radius:50%;background:#6366f1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">GW</div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#111">Gavin Wilmot</div>
+                  <div style="font-size:12px;color:#666">NovaSoft · Senior AE</div>
+                  <div style="font-size:11px;color:#f59e0b;margin-top:2px">✉️ Opened email · 2h ago</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:12px;font-weight:600;color:#333">+44 20 5555 0187</div>
+                  <div style="font-size:10px;background:#f0fdf9;color:#0f766e;border:1px solid #99f6e4;border-radius:4px;padding:2px 6px;margin-top:3px;display:inline-block">Seq. Step 2</div>
+                </div>
+                <div style="flex-shrink:0;text-align:right">
+                  <div style="font-size:11px;color:#aaa">In 30m</div>
+                  <div style="font-size:12px;font-weight:700;color:#0f766e">88</div>
+                </div>
+                <button class="btn btn-teal btn-sm" onclick="event.stopPropagation();showScreen('active-call')" style="flex-shrink:0">📞 Call</button>
+              </div>
+              <!-- Dan (sequence step) -->
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s" onclick="showScreen('active-call')" onmouseover="this.style.borderColor='#0d9488'" onmouseout="this.style.borderColor='#e8e8e8'">
+                <input type="checkbox" onclick="event.stopPropagation()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0">
+                <div style="width:36px;height:36px;border-radius:50%;background:#0ea5e9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">DS</div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#111">Dan Strauss</div>
+                  <div style="font-size:12px;color:#666">Acme Corp · VP Revenue Operations</div>
+                  <div style="font-size:11px;color:#2563eb;margin-top:2px">💼 LinkedIn visit · 1h ago</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:12px;font-weight:600;color:#333">+1 (415) 555-0192</div>
+                  <div style="font-size:10px;background:#f0fdf9;color:#0f766e;border:1px solid #99f6e4;border-radius:4px;padding:2px 6px;margin-top:3px;display:inline-block">Seq. Step 4</div>
+                </div>
+                <div style="flex-shrink:0;text-align:right">
+                  <div style="font-size:11px;color:#aaa">In 2h</div>
+                  <div style="font-size:12px;font-weight:700;color:#0f766e">91</div>
+                </div>
+                <button class="btn btn-teal btn-sm" onclick="event.stopPropagation();showScreen('active-call')" style="flex-shrink:0">📞 Call</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SCREEN 4: ACTIVE CALL ======================== -->
+    <div class="screen" id="screen-active-call" style="flex-direction:column">
+      <div class="call-layout">
+        <!-- Left: queue -->
+        <div class="call-queue-panel">
+          <div class="call-queue-header">
+            Queue <span style="color:#111;font-weight:800">5</span> left
+          </div>
+          <div class="queue-lead active-call">
+            <div class="queue-lead-name">Sarah Chen</div>
+            <div class="queue-lead-role">Head of Sales · TechCorp</div>
+            <div class="queue-signal"><span class="signal-badge signal-hot" style="font-size:10px">🔥 Pricing page 12m</span></div>
+          </div>
+          <div class="queue-lead">
+            <div class="queue-lead-name">Marcus Johnson</div>
+            <div class="queue-lead-role">VP Revenue · GrowthCo</div>
+            <div class="queue-signal"><span class="signal-badge signal-social" style="font-size:10px">🔗 LinkedIn</span></div>
+          </div>
+          <div class="queue-lead">
+            <div class="queue-lead-name">Elena Vasquez</div>
+            <div class="queue-lead-role">Dir. BizDev · ScaleUp SaaS</div>
+            <div class="queue-signal"><span class="signal-badge signal-funding" style="font-size:10px">💰 Series B</span></div>
+          </div>
+          <div class="queue-lead">
+            <div class="queue-lead-name">James Okafor</div>
+            <div class="queue-lead-role">Head Sales Ops · CloudFirst</div>
+            <div class="queue-signal"><span class="signal-badge signal-hot" style="font-size:10px">🔥 G2 visit</span></div>
+          </div>
+          <div class="queue-lead">
+            <div class="queue-lead-name">Priya Sharma</div>
+            <div class="queue-lead-role">Sales Manager · Nexus Labs</div>
+            <div class="queue-signal"><span class="signal-badge signal-job" style="font-size:10px">💼 New role</span></div>
+          </div>
+          <div style="padding:12px 14px">
+            <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="showScreen('leads')">← Back to Leads</button>
+          </div>
+        </div>
+
+        <!-- Center: softphone + notes -->
+        <div class="call-center">
+          <div class="call-status-bar">
+            <div class="call-status-label">
+              <div class="status-dot-pulse" id="statusDot"></div>
+              <span id="callStatusText">Connected · Sarah Chen</span>
+            </div>
+            <div class="call-timer" id="callTimerDisplay">0:47</div>
+          </div>
+
+          <!-- Two-party consent banner -->
+          <div id="consentBanner" style="background:#fffbeb;border-bottom:1px solid #fde68a;padding:10px 20px;display:flex;align-items:center;gap:10px;font-size:12px;color:#92400e;flex-shrink:0">
+            <span style="font-size:16px">⚖️</span>
+            <span><strong>Recording disclosure playing…</strong> "This call may be recorded for quality assurance." &nbsp;|&nbsp; <span style="color:#ef4444">EU/GDPR:</span> Additional consent required for EU prospects.</span>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+              <div id="consentCountdown" style="font-weight:700;color:#d97706">3s</div>
+              <button class="btn btn-ghost btn-sm" onclick="dismissConsent()">Dismiss</button>
+            </div>
+          </div>
+
+          <div class="call-prospect-header">
+            <div class="prospect-name-big">Sarah Chen</div>
+            <div class="prospect-meta">Head of Sales · TechCorp Inc. · San Francisco, CA</div>
+            <div class="prospect-phone">📱 +1 (415) 555-0182 · <span class="signal-badge signal-hot" style="font-size:11px">🔥 Visited pricing page 12 min ago</span></div>
+          </div>
+
+          <!-- VM drop banner -->
+          <div class="vm-banner" id="vmBanner">
+            📩 Auto-voicemail ready to drop. <span id="vmCountdown" style="font-weight:700;color:#ea580c">Auto-dropping in 3s…</span>
+            <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="cancelVMDrop()">Cancel</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('vmBanner').style.display='none'">Drop Now</button>
+          </div>
+
+          <div class="softphone">
+            <div class="softphone-controls">
+              <button class="ctrl-btn" id="muteBtn" data-tip="Mute" onclick="toggleMute()">🎙</button>
+              <button class="ctrl-btn" id="holdBtn" data-tip="Hold" onclick="toggleHold()">⏸</button>
+              <button class="ctrl-btn" data-tip="Keypad">⌨️</button>
+              <button class="ctrl-btn" data-tip="Speaker">🔊</button>
+              <button class="ctrl-btn vm-drop" data-tip="Drop Voicemail">📩 Drop VM</button>
+              <div style="flex:1"></div>
+              <button class="ctrl-btn end-call" data-tip="End Call" onclick="showDisposition()">📵</button>
+            </div>
+          </div>
+
+          <div class="call-notes">
+            <div class="notes-label">Live Notes</div>
+            <textarea class="notes-textarea" placeholder="Type notes as you talk… (Rep should only be reading and talking — no other clicks needed)"></textarea>
+            <div class="notes-hint">Notes auto-save · Extracted to CRM after call</div>
+
+            <!-- V2: Talk time bar -->
+            <div style="margin-top:10px;padding:8px 10px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:8px;opacity:.5">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#888;margin-bottom:5px">
+                <span>Talk time ratio <span style="background:#f3f4f6;color:#aaa;padding:1px 5px;border-radius:4px;font-size:10px;margin-left:4px">V2</span></span>
+                <span style="color:#bbb">Rep 0% · Prospect 0%</span>
+              </div>
+              <div style="height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:40%;background:linear-gradient(90deg,#0d9488,#3b82f6)"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:#ccc;margin-top:3px"><span>Rep</span><span>Prospect</span></div>
+            </div>
+
+            <!-- V2: Live transcription -->
+            <div style="margin-top:8px;padding:8px 10px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:8px;opacity:.5">
+              <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:4px">Live Transcription <span style="background:#f3f4f6;color:#aaa;padding:1px 5px;border-radius:4px;font-size:10px">V2</span></div>
+              <div style="font-size:11px;color:#bbb;font-style:italic">Real-time transcription with speaker diarization will appear here…</div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="notes-label">Talk Track Signals</div>
+            <div style="background:#f9f9f9;border:1px solid #e8e8e8;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;line-height:1.6">
+              <div style="margin-bottom:6px">💡 <strong>Why calling now:</strong> Sarah visited your pricing page 12 minutes ago — high intent window. Reference it naturally.</div>
+              <div style="margin-bottom:6px">🎯 <strong>Her pain:</strong> Building new outbound motion after joining 2 months ago. Headcount pressure.</div>
+              <div style="margin-bottom:6px">⚔️ <strong>Likely objection:</strong> "We already use Outreach." → Lead with signal intelligence differentiator.</div>
+            </div>
+
+            <!-- V2: KB pull -->
+            <div style="margin-top:8px;padding:8px 10px;background:#f9f9f9;border:1px dashed #d0d0d0;border-radius:8px;opacity:.5">
+              <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:3px">Knowledge Base Pull <span style="background:#f3f4f6;color:#aaa;padding:1px 5px;border-radius:4px;font-size:10px">V2</span></div>
+              <div style="font-size:11px;color:#bbb">Competitor/objection keywords will trigger relevant KB cards here in real-time.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: context pane -->
+        <div class="call-context-panel">
+          <div class="context-tabs">
+            <div class="context-tab active" onclick="switchContextTab(this,'lead-details')">Details</div>
+            <div class="context-tab" onclick="switchContextTab(this,'research')">Research</div>
+            <div class="context-tab" onclick="switchContextTab(this,'activity')">Activity</div>
+            <div class="context-tab" onclick="switchContextTab(this,'call-notes')">Notes</div>
+          </div>
+          <div class="context-body">
+            <!-- Lead Details tab -->
+            <div id="ctx-lead-details">
+              <div class="info-row"><div class="info-label">Name</div><div class="info-val">Sarah Chen</div></div>
+              <div class="info-row"><div class="info-label">Title</div><div class="info-val">Head of Sales</div></div>
+              <div class="info-row"><div class="info-label">Company</div><div class="info-val">TechCorp Inc.</div></div>
+              <div class="info-row"><div class="info-label">Industry</div><div class="info-val">B2B SaaS · 200 employees</div></div>
+              <div class="info-row"><div class="info-label">Location</div><div class="info-val">San Francisco, CA · 11:02 AM</div></div>
+              <div class="info-row"><div class="info-label">Phone</div><div class="info-val">+1 (415) 555-0182</div></div>
+              <div class="info-row"><div class="info-label">Email</div><div class="info-val">s.chen@techcorp.io</div></div>
+              <div class="info-row"><div class="info-label">LinkedIn</div><div class="info-val"><a class="info-link" href="#">View Profile →</a></div></div>
+              <div class="divider"></div>
+              <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">LinkedIn</div>
+              <div class="info-row"><div class="info-label">Headline</div><div class="info-val" style="font-size:11px">Head of Sales @ TechCorp · Formerly Salesloft · Pipeline-obsessed</div></div>
+              <div class="info-row"><div class="info-label">Recent post</div><div class="info-val" style="font-size:11px;color:#555">"Hiring 2 SDRs in Q2 — outbound motion is the priority this year…"</div></div>
+              <div class="info-row"><div class="info-label">Mutual</div><div class="info-val" style="font-size:11px">3 mutual connections</div></div>
+              <div class="divider"></div>
+              <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Company Info</div>
+              <div class="info-row"><div class="info-label">Size</div><div class="info-val">200 employees</div></div>
+              <div class="info-row"><div class="info-label">Funding</div><div class="info-val">Series A — $12M (Jan 2025)</div></div>
+              <div class="info-row"><div class="info-label">Tech Stack</div><div class="info-val">Salesforce, Outreach, Gong</div></div>
+            </div>
+            <!-- Research tab -->
+            <div id="ctx-research" style="display:none">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:11px;color:#0d9488;font-weight:600">✅ Pre-loaded · Ready in 1.2s</div>
+              <div class="research-block">
+                <div class="research-block-title">Role Context</div>
+                <div class="research-block-text">Sarah joined TechCorp 2 months ago as Head of Sales, inheriting a 6-person team. She's tasked with 3× pipeline growth in Q1/Q2. Prior role: Senior AE at Salesloft for 4 years.</div>
+              </div>
+              <div class="research-block">
+                <div class="research-block-title">Company Context</div>
+                <div class="research-block-text">TechCorp raised $12M Series A in Jan. Expanding into 3 new US territories. Currently using Outreach for sequencing but SDRs report low connect rates (reported on G2).</div>
+              </div>
+              <div class="research-block">
+                <div class="research-block-title">Why Call Now (Signals)</div>
+                <div class="research-block-text">🔥 Visited 11x pricing page 12 min ago (high-intent window). 📧 Opened intro email 3× in last 24 hours — strong curiosity signal.</div>
+              </div>
+              <div class="research-block">
+                <div class="research-block-title">Relevance to 11x</div>
+                <div class="research-block-text">She's solving the same problem 11x addresses: getting more qualified conversations from a small SDR team. Alice's signal-based prioritization directly maps to her OKR of 3× pipeline growth.</div>
+              </div>
+            </div>
+            <!-- Activity tab -->
+            <div id="ctx-activity" style="display:none">
+              <div class="activity-item">
+                <div class="activity-icon act-call" style="background:#fee2e2">📵</div>
+                <div>
+                  <div class="activity-text">Call — <span style="color:#ef4444;font-weight:500">No Answer</span></div>
+                  <div class="activity-time">2 days ago · 0:18 · Left voicemail</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon act-email">✉️</div>
+                <div>
+                  <div class="activity-text">Email #1 opened · 3× in 24 hours</div>
+                  <div class="activity-time">Yesterday</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon act-linkedin">💼</div>
+                <div>
+                  <div class="activity-text">LinkedIn connection sent</div>
+                  <div class="activity-time">4 days ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon act-call" style="background:#fee2e2">📵</div>
+                <div>
+                  <div class="activity-text">Call — <span style="color:#f59e0b;font-weight:500">Gatekeeper</span></div>
+                  <div class="activity-time">6 days ago · Hit phone tree</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon act-email">✉️</div>
+                <div>
+                  <div class="activity-text">Email #1 sent — Intro</div>
+                  <div class="activity-time">7 days ago</div>
+                </div>
+              </div>
+            </div>
+            <!-- Call Notes tab -->
+            <div id="ctx-call-notes" style="display:none">
+              <div style="font-size:11px;color:#888;margin-bottom:10px">Notes from prior calls with this lead</div>
+              <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+                <div style="font-size:11px;font-weight:600;color:#92400e;margin-bottom:4px">📞 Call · 2 days ago · No Answer</div>
+                <div style="font-size:12px;color:#555">Rang 4x, went to voicemail. Dropped pre-recorded VM. Last attempt hit phone tree — try direct mobile next time.</div>
+              </div>
+              <div style="background:#f9f9f9;border:1px solid #e8e8e8;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+                <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:4px">📞 Call · 6 days ago · Gatekeeper</div>
+                <div style="font-size:12px;color:#555">Hit automated dial tree. "Please state your name and reason for calling." Hung up. Need to use mobile number.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disposition modal -->
+      <div class="disposition-modal hidden" id="dispModal">
+        <div class="disposition-panel">
+          <div class="disp-header">
+            <div class="disp-title">Post-Call: Sarah Chen</div>
+            <div class="disp-subtitle">Call duration: 4:23 · TechCorp Inc. · Head of Sales</div>
+            <div style="font-size:11px;color:#aaa;margin-top:4px;letter-spacing:.04em">Scenario &nbsp;·&nbsp; Sequence Action &nbsp;·&nbsp; CRM Sync</div>
+          </div>
+
+          <div class="disp-section">
+            <div class="disp-section-label">AI-Detected Scenario</div>
+            <div class="ai-suggestion">
+              ✨ Alice suggests: <strong style="margin-left:4px">Interested / Meeting Booked</strong> — detected interest signals and calendar mention in transcript
+            </div>
+            <div class="disp-section-label" style="margin-top:12px">Select Scenario</div>
+            <div class="disp-chips">
+              <div class="disp-chip selected" onclick="selectDisp(this,'meeting')">✅ Interested / Meeting Booked</div>
+              <div class="disp-chip" onclick="selectDispCallback(this)">🗓 Call Back Later</div>
+              <div class="disp-chip negative" onclick="selectDisp(this,'not-interested')">❌ Not Interested</div>
+              <div class="disp-chip neutral" onclick="selectDisp(this,'vm-left')">📩 Left Voicemail</div>
+              <div class="disp-chip neutral" onclick="selectDisp(this,'no-answer')">📵 No Answer</div>
+              <div class="disp-chip negative" onclick="selectDisp(this,'wrong-number')">❌ Wrong Number</div>
+              <div class="disp-chip neutral" onclick="selectDisp(this,'do-not-call')">🔒 Gatekeeper / DNC</div>
+              <div class="disp-chip neutral" onclick="selectDisp(this,'referred')">🔀 Referred / Wrong Person</div>
+            </div>
+          </div>
+
+          <!-- Sequence Action selector -->
+          <div class="disp-section" id="seqActionSection">
+            <div class="disp-section-label">Sequence Action</div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button id="actionContinue" class="seq-action-btn" onclick="selectSeqAction('continue')">▶ Continue</button>
+              <button id="actionStop" class="seq-action-btn" onclick="selectSeqAction('stop')">⏹ Stop</button>
+              <button id="actionSnooze" class="seq-action-btn" onclick="selectSeqAction('snooze')">💤 Snooze</button>
+            </div>
+            <div id="seqActionHint" style="font-size:11px;color:#888;margin-top:6px"></div>
+          </div>
+
+          <!-- Hidden elements to keep updateBranchingSummary from throwing -->
+          <span id="bCalls" style="display:none"></span>
+          <span id="bEmail" style="display:none"></span>
+          <span id="bCrm" style="display:none"></span>
+
+          <!-- Wrong Number panel (shown when selected) -->
+          <div class="disp-section" id="wrongNumberPanel" style="display:none">
+            <div class="disp-section-label">Wrong Number Action</div>
+            <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;font-size:12px;color:#9a3412">
+              <div style="font-weight:600;margin-bottom:6px">🔄 Triggering FullEnrich re-enrichment…</div>
+              <div style="color:#c2410c">Searching waterfall providers for a new phone number for Sarah Chen at TechCorp Inc.</div>
+              <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+                <div style="height:4px;flex:1;background:#fed7aa;border-radius:2px;overflow:hidden"><div style="height:100%;width:60%;background:#ea580c;animation:bar-pulse 1.5s infinite"></div></div>
+                <span style="font-size:11px;color:#ea580c">Searching…</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Referred panel (shown when selected) -->
+          <div class="disp-section" id="referredPanel" style="display:none">
+            <div class="disp-section-label">Referral Details</div>
+            <div style="background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px;padding:12px">
+              <div style="font-size:12px;color:#065f46;margin-bottom:8px">Prospect referred you to someone else. Capture their details:</div>
+              <div class="crm-field" style="margin-bottom:6px">
+                <div class="crm-field-label" style="width:80px">Name</div>
+                <input class="crm-field-val" placeholder="Referral name…" style="border:1px solid #e8e8e8;border-radius:6px;padding:5px 8px;font-size:12px;outline:none;width:100%">
+              </div>
+              <div class="crm-field" style="margin-bottom:8px">
+                <div class="crm-field-label" style="width:80px">Email</div>
+                <input class="crm-field-val" placeholder="referral@company.com" style="border:1px solid #e8e8e8;border-radius:6px;padding:5px 8px;font-size:12px;outline:none;width:100%">
+              </div>
+              <button class="btn btn-teal btn-sm" style="width:100%;justify-content:center">＋ Add to Campaign <span style="background:rgba(255,255,255,.2);padding:1px 5px;border-radius:4px;font-size:10px;margin-left:4px">V2</span></button>
+            </div>
+          </div>
+
+          <!-- Snooze sub-panel -->
+          <div class="disp-section" id="snoozePanel" style="display:none">
+            <div class="disp-section-label">Snooze Call Steps</div>
+            <div style="background:#f9f9f9;border:1px solid #e8e8e8;border-radius:8px;padding:12px">
+              <div style="font-size:12px;color:#555;margin-bottom:8px">How long should call steps be paused?</div>
+              <div style="display:flex;gap:10px;margin-bottom:10px;padding:8px 10px;background:#fff;border:1px solid #e8e8e8;border-radius:7px">
+                <div style="font-size:12px">📧 <strong>Email &amp; LinkedIn</strong> continue normally</div>
+                <div style="color:#d1d5db">·</div>
+                <div style="font-size:12px;color:#ef4444" id="snoozeDurationLabel">📞 <strong>Call steps</strong> paused until confirmed</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                <div class="disp-chip neutral" style="font-size:11px" onclick="selectSnooze(this,'1w')">1 Week</div>
+                <div class="disp-chip neutral" style="font-size:11px" onclick="selectSnooze(this,'2w')">2 Weeks</div>
+                <div class="disp-chip neutral" style="font-size:11px" onclick="selectSnooze(this,'1m')">1 Month</div>
+                <div class="disp-chip neutral" style="font-size:11px" onclick="selectSnooze(this,'indef')">Indefinitely 🚫</div>
+                <div class="disp-chip neutral" style="font-size:11px" onclick="selectSnooze(this,'custom')">📅 Custom date</div>
+              </div>
+              <div id="snoozeCustomDate" style="display:none;margin-bottom:8px">
+                <input type="date" style="width:100%;border:1px solid #e8e8e8;border-radius:6px;padding:7px 10px;font-size:12px" min="" max="">
+                <div style="font-size:11px;color:#888;margin-top:4px">Max 1 month. If &gt;1 month, becomes a standalone task; sequence continues.</div>
+              </div>
+              <div id="snoozeIndefiniteNote" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px;font-size:11px;color:#92400e;margin-bottom:8px">
+                ⚠️ "Don't call me": suppresses phone channel only. Email &amp; LinkedIn steps continue unless you also pause the full sequence.
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center">Confirm Snooze</button>
+            </div>
+          </div>
+
+          <!-- Quick Actions (V1.4) -->
+          <div class="disp-section" id="quickActionsSection">
+            <div class="disp-section-label">Quick Actions</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-secondary btn-sm" onclick="toggleQuickAction('followup')" style="gap:6px">📧 Send Follow-up Email</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleQuickAction('callback')" style="gap:6px">🗓 Schedule Callback</button>
+              <button class="btn btn-secondary btn-sm" style="color:#aaa;border-color:#e8e8e8;cursor:not-allowed;gap:6px" disabled>➕ Adjust Sequence <span style="background:#f3f4f6;color:#aaa;padding:1px 4px;border-radius:3px;font-size:10px;font-weight:700">V2</span></button>
+            </div>
+            <!-- Follow-up email compose -->
+            <div id="followupCompose" style="display:none;margin-top:10px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:8px;padding:12px">
+              <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Follow-up Email</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-size:12px;color:#888;width:36px">To:</span>
+                <span style="font-size:12px;color:#333">sarah.chen@techcorp.io</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <span style="font-size:12px;color:#888;width:36px">Sub:</span>
+                <input style="flex:1;border:1px solid #e8e8e8;border-radius:6px;padding:5px 8px;font-size:12px;outline:none" value="Great speaking with you — next steps">
+              </div>
+              <textarea style="width:100%;border:1px solid #e8e8e8;border-radius:6px;padding:8px;font-size:12px;resize:none;height:64px;outline:none;font-family:inherit">Hi Sarah, great speaking today. As promised, I'll send over the demo recording. Would Thursday 2pm work for a follow-up?</textarea>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center">📧 Send Now <span style="background:rgba(255,255,255,.2);padding:1px 5px;border-radius:4px;font-size:10px;margin-left:4px">V2</span></button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleQuickAction('followup')">Cancel</button>
+              </div>
+            </div>
+            <!-- Schedule callback -->
+            <div id="callbackSchedule" style="display:none;margin-top:10px;background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px;padding:12px">
+              <div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Schedule Callback</div>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                <input type="date" style="flex:1;border:1px solid #e8e8e8;border-radius:6px;padding:6px 8px;font-size:12px;outline:none">
+                <input type="time" style="width:96px;border:1px solid #e8e8e8;border-radius:6px;padding:6px 8px;font-size:12px;outline:none" value="14:00">
+              </div>
+              <div style="font-size:11px;color:#0f766e;margin-bottom:8px">📞 Callback will appear in your Call Center queue when due.</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="confirmCallback()">🗓 Confirm Callback</button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleQuickAction('callback')">Cancel</button>
+              </div>
+            </div>
+            <!-- Callback confirmed state -->
+            <div id="callbackConfirmed" style="display:none;margin-top:10px;background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px;padding:10px 12px;font-size:12px;color:#065f46">
+              ✅ Callback scheduled · Will appear in Call Center queue when due
+            </div>
+          </div>
+
+          <div class="disp-section">
+            <div class="disp-section-label">CRM Field Extraction (AI)</div>
+            <div class="crm-extract">
+              <div class="crm-field">
+                <div class="crm-field-label">Pain Points</div>
+                <div class="crm-field-val" contenteditable="true">Low connect rates on cold calls, small SDR team bandwidth</div>
+              </div>
+              <div class="crm-field">
+                <div class="crm-field-label">Budget</div>
+                <div class="crm-field-val" contenteditable="true">~$50K–80K/yr range mentioned</div>
+              </div>
+              <div class="crm-field">
+                <div class="crm-field-label">Competitors</div>
+                <div class="crm-field-val" contenteditable="true">Currently using Outreach; evaluated Orum</div>
+              </div>
+              <div class="crm-field">
+                <div class="crm-field-label">Timeline</div>
+                <div class="crm-field-val" contenteditable="true">Q2 decision — evaluating by end of April</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="disp-section">
+            <div class="disp-section-label">Call Notes</div>
+            <textarea class="notes-textarea" style="min-height:70px" placeholder="Add or edit call notes...">Caught her right after she visited pricing. She's keen — asked about parallel dialing + CRM sync. Wants to see a demo with her team. Mention Gong integration she asked about.</textarea>
+          </div>
+
+          <!-- Send Quick Followup V2 -->
+          <div class="disp-section" style="border-top:2px solid #f0f0f0;padding-top:12px">
+            <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;color:#aaa;border-color:#e8e8e8;cursor:not-allowed" disabled>
+              ✉️ Send Quick Follow-up
+              <span style="background:#f3f4f6;color:#aaa;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px">V2</span>
+            </button>
+            <div style="text-align:center;font-size:11px;color:#bbb;margin-top:4px">AI-drafted follow-up based on call transcript</div>
+          </div>
+
+          <div class="disp-footer">
+            <button class="btn btn-ghost" onclick="hideDisposition()">Cancel</button>
+            <button class="btn btn-primary" onclick="nextLead()">Save + Next Lead →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SCREEN 6: ANALYTICS ======================== -->
+    <div class="screen" id="screen-analytics">
+      <div class="analytics-grid">
+        <div class="analytics-kpi">
+          <div class="kpi-value">62</div>
+          <div class="kpi-label">Calls / Day / Rep</div>
+          <div class="kpi-change kpi-up">↑ 24% vs last week</div>
+        </div>
+        <div class="analytics-kpi">
+          <div class="kpi-value" style="color:#0d9488">9.4%</div>
+          <div class="kpi-label">Connect Rate</div>
+          <div class="kpi-change kpi-up">↑ 2.1pp — signal-triggered calls: 18%</div>
+        </div>
+        <div class="analytics-kpi">
+          <div class="kpi-value">8.3</div>
+          <div class="kpi-label">Conversations / Day / Rep</div>
+          <div class="kpi-change kpi-up">↑ 31% vs baseline</div>
+        </div>
+        <div class="analytics-kpi">
+          <div class="kpi-value" style="color:#16a34a">17%</div>
+          <div class="kpi-label">Meeting Book Rate (Connected)</div>
+          <div class="kpi-change kpi-up">↑ Target: 15% ✅</div>
+        </div>
+      </div>
+
+      <div class="analytics-row">
+        <!-- Disposition donut -->
+        <div class="analytics-card">
+          <div class="analytics-card-title">Disposition Breakdown</div>
+          <div class="donut-wrap">
+            <svg class="donut-svg" viewBox="0 0 42 42">
+              <!-- Background circle -->
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f3f4f6" stroke-width="8"/>
+              <!-- Interested: 17% → 106.8 out of 628 -->
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#22c55e" stroke-width="8" stroke-dasharray="17 83" stroke-dashoffset="25" transform="rotate(-90 21 21)"/>
+              <!-- No Answer: 38% -->
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#94a3b8" stroke-width="8" stroke-dasharray="38 62" stroke-dashoffset="8" transform="rotate(-90 21 21)"/>
+              <!-- VM: 22% -->
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f59e0b" stroke-width="8" stroke-dasharray="22 78" stroke-dashoffset="-30" transform="rotate(-90 21 21)"/>
+              <!-- Not Interested: 11% -->
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#ef4444" stroke-width="8" stroke-dasharray="11 89" stroke-dashoffset="-52" transform="rotate(-90 21 21)"/>
+              <!-- Other: 12% -->
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-dasharray="12 88" stroke-dashoffset="-63" transform="rotate(-90 21 21)"/>
+              <text x="21" y="21" text-anchor="middle" dy=".3em" font-size="6" font-weight="700" fill="#111">312</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><div class="legend-label">Interested / Meeting</div><div class="legend-pct">17%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div><div class="legend-label">No Answer</div><div class="legend-pct">38%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><div class="legend-label">Left Voicemail</div><div class="legend-pct">22%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><div class="legend-label">Not Interested</div><div class="legend-pct">11%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0"></div><div class="legend-label">Other</div><div class="legend-pct">12%</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signal performance -->
+        <div class="analytics-card">
+          <div class="analytics-card-title">Signal → Connect Rate</div>
+          <table class="signal-table">
+            <thead><tr><th>Signal Type</th><th>Connect %</th><th>Meeting %</th><th style="width:80px">Perf.</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>🔥 Pricing page visit</td>
+                <td style="font-weight:700;color:#16a34a">22%</td>
+                <td style="font-weight:700;color:#16a34a">31%</td>
+                <td><span class="bar-mini" style="width:80px"></span></td>
+              </tr>
+              <tr>
+                <td>📧 Email opened 3×</td>
+                <td style="font-weight:700;color:#16a34a">18%</td>
+                <td>24%</td>
+                <td><span class="bar-mini" style="width:64px"></span></td>
+              </tr>
+              <tr>
+                <td>🔗 LinkedIn accepted</td>
+                <td style="font-weight:700;color:#0d9488">16%</td>
+                <td>19%</td>
+                <td><span class="bar-mini" style="width:56px"></span></td>
+              </tr>
+              <tr>
+                <td>💰 Funding event</td>
+                <td>14%</td>
+                <td>17%</td>
+                <td><span class="bar-mini" style="width:48px"></span></td>
+              </tr>
+              <tr>
+                <td>💼 New job (30d)</td>
+                <td>12%</td>
+                <td>14%</td>
+                <td><span class="bar-mini" style="width:42px"></span></td>
+              </tr>
+              <tr>
+                <td>📅 Sequence only</td>
+                <td style="color:#888">5%</td>
+                <td style="color:#888">8%</td>
+                <td><span class="bar-mini" style="width:18px;background:#d1d5db"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="analytics-row" style="padding-top:0">
+        <!-- Rep leaderboard -->
+        <div class="analytics-card">
+          <div class="analytics-card-title">Rep Leaderboard — This Week</div>
+          <table class="leaderboard">
+            <thead><tr><th>#</th><th>Rep</th><th>Calls</th><th>Connect%</th><th>Meetings</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="rank rank-1">1</td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar sm" style="background:#1e3a5f;color:#93c5fd">SC</div>Sarah C.</div></td>
+                <td>74</td><td style="color:#16a34a;font-weight:700">14.2%</td><td style="font-weight:700">8</td>
+              </tr>
+              <tr>
+                <td class="rank">2</td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar sm" style="background:#2d4a3e;color:#6ee7b7">MJ</div>Marcus J.</div></td>
+                <td>68</td><td style="color:#0d9488;font-weight:700">11.8%</td><td style="font-weight:700">6</td>
+              </tr>
+              <tr>
+                <td class="rank">3</td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar sm" style="background:#4c1d95;color:#c4b5fd">EV</div>Elena V.</div></td>
+                <td>61</td><td>9.2%</td><td>5</td>
+              </tr>
+              <tr>
+                <td class="rank">4</td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar sm" style="background:#78350f;color:#fde68a">JO</div>James O.</div></td>
+                <td>55</td><td>8.7%</td><td>4</td>
+              </tr>
+              <tr>
+                <td class="rank">5</td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="avatar sm" style="background:#1f2937;color:#9ca3af">PS</div>Priya S.</div></td>
+                <td>48</td><td>7.1%</td><td>3</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- CRM sync health -->
+        <div class="analytics-card">
+          <div class="analytics-card-title">System Health</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px">
+              <span style="font-size:12px;font-weight:500;color:#065f46">✅ CRM Sync Reliability</span>
+              <span style="font-size:16px;font-weight:800;color:#16a34a">99.7%</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px">
+              <span style="font-size:12px;font-weight:500;color:#065f46">⚡ Avg Connect Latency</span>
+              <span style="font-size:16px;font-weight:800;color:#16a34a">187ms</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px">
+              <span style="font-size:12px;font-weight:500;color:#065f46">📋 Context Pane Load</span>
+              <span style="font-size:16px;font-weight:800;color:#16a34a">1.2s</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">
+              <span style="font-size:12px;font-weight:500;color:#92400e">⚠️ Anti-Spam Number Health</span>
+              <span style="font-size:16px;font-weight:800;color:#f59e0b">92%</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px">
+              <span style="font-size:12px;font-weight:500;color:#374151">📵 Call Drop Rate</span>
+              <span style="font-size:16px;font-weight:800;color:#111">0.8%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SCREEN: PHONE NUMBER MANAGEMENT (V0.2) ======================== -->
+    <div class="screen" id="screen-phone-numbers">
+      <div style="padding:24px;max-width:900px;margin:0 auto">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:#111">Settings · Phone Numbers</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">Manage outbound calling numbers for your team</div>
+          </div>
+          <button class="btn btn-teal btn-sm" onclick="alert('Provision Number — coming soon in V0.2')">+ Provision Number</button>
+        </div>
+
+        <!-- Number inventory table -->
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;overflow:hidden;margin-bottom:24px">
+          <div style="padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;gap:0">
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;flex:2">Phone Number</div>
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;flex:1">Type</div>
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;flex:2">Assigned To</div>
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;flex:1">Health</div>
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;flex:1">Status</div>
+            <div style="width:120px"></div>
+          </div>
+          <!-- Row 1 -->
+          <div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:0">
+            <div style="flex:2;font-size:13px;font-weight:600;color:#111">+1 (628) 555-0134</div>
+            <div style="flex:1"><span style="font-size:11px;background:#f0fdf9;color:#0f766e;border:1px solid #99f6e4;border-radius:4px;padding:2px 7px">Local US</span></div>
+            <div style="flex:2;font-size:12px;color:#333;display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:#0d9488;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">H</div>Hemant Phalak</div>
+            <div style="flex:1"><span style="font-size:12px;font-weight:700;color:#16a34a">98%</span></div>
+            <div style="flex:1"><span style="font-size:11px;background:#f0fdf9;color:#16a34a;border-radius:4px;padding:2px 7px;font-weight:600">Active</span></div>
+            <div style="width:120px;display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="alert('Reassign')">Reassign</button>
+            </div>
+          </div>
+          <!-- Row 2 -->
+          <div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:0">
+            <div style="flex:2;font-size:13px;font-weight:600;color:#111">+44 20 5555 0187</div>
+            <div style="flex:1"><span style="font-size:11px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px;padding:2px 7px">Local UK</span></div>
+            <div style="flex:2;font-size:12px;color:#333;display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:#6366f1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">A</div>Alice (Shared)</div>
+            <div style="flex:1"><span style="font-size:12px;font-weight:700;color:#f59e0b">92%</span></div>
+            <div style="flex:1"><span style="font-size:11px;background:#f0fdf9;color:#16a34a;border-radius:4px;padding:2px 7px;font-weight:600">Active</span></div>
+            <div style="width:120px;display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="alert('Reassign')">Reassign</button>
+            </div>
+          </div>
+          <!-- Row 3 -->
+          <div style="padding:14px 20px;display:flex;align-items:center;gap:0">
+            <div style="flex:2;font-size:13px;font-weight:600;color:#111">+1 (800) 555-0192</div>
+            <div style="flex:1"><span style="font-size:11px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:4px;padding:2px 7px">Toll-Free</span></div>
+            <div style="flex:2;font-size:12px;color:#888;font-style:italic">Unassigned</div>
+            <div style="flex:1"><span style="font-size:12px;font-weight:700;color:#16a34a">99%</span></div>
+            <div style="flex:1"><span style="font-size:11px;background:#f3f4f6;color:#888;border-radius:4px;padding:2px 7px;font-weight:600">Inactive</span></div>
+            <div style="width:120px;display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="alert('Reassign')">Assign</button>
+              <button class="btn btn-ghost btn-sm" style="color:#ef4444;border-color:#fca5a5" onclick="alert('Deprovision')">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voicemail recording -->
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:20px">
+          <div style="font-size:14px;font-weight:700;color:#111;margin-bottom:4px">Voicemail Recording</div>
+          <div style="font-size:12px;color:#888;margin-bottom:16px">Your pre-recorded voicemail is dropped automatically when Alice detects voicemail on a call.</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa">
+            <button style="width:36px;height:36px;border-radius:50%;background:#0d9488;color:#fff;border:none;cursor:pointer;font-size:16px">▶</button>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:#111">Hemant-VM-v3.mp3</div>
+              <div style="font-size:11px;color:#888">0:14 · Recorded Mar 10, 2026</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="alert('Re-record voicemail')">Re-record</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .content -->
+</div><!-- end .main -->
+
+<script>
+// ===== SCREEN MANAGEMENT =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const titles = {
+    'campaigns': 'Campaigns',
+    'campaign-creation': 'Campaign · CSV Campaign',
+    'leads': 'Leads',
+    'call-center': 'Call Center',
+    'active-call': 'Leads · Active Call',
+    'analytics': 'Analytics',
+    'phone-numbers': 'Settings · Phone Numbers'
+  };
+
+  const navMap = {
+    'campaigns': 'nav-campaigns',
+    'campaign-creation': 'nav-campaigns',
+    'leads': 'nav-leads',
+    'call-center': 'nav-call-center',
+    'active-call': 'nav-leads',
+    'analytics': 'nav-analytics'
+  };
+
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active');
+  document.getElementById('topbarTitle').textContent = titles[name] || name;
+  const navEl = document.getElementById(navMap[name]);
+  if (navEl) navEl.classList.add('active');
+
+  if (name === 'active-call') { startCallTimer(); startConsentCountdown(); }
+  if (name !== 'active-call') { stopCallTimer(); dismissConsent(); }
+}
+
+// ===== QUICK ACTIONS =====
+function toggleQuickAction(type) {
+  const followup = document.getElementById('followupCompose');
+  const callback = document.getElementById('callbackSchedule');
+  if (type === 'followup') {
+    if (followup) followup.style.display = followup.style.display === 'none' ? '' : 'none';
+    if (callback) callback.style.display = 'none';
+  } else if (type === 'callback') {
+    if (callback) callback.style.display = callback.style.display === 'none' ? '' : 'none';
+    if (followup) followup.style.display = 'none';
+  }
+}
+function confirmCallback() {
+  const sched = document.getElementById('callbackSchedule');
+  const confirmed = document.getElementById('callbackConfirmed');
+  if (sched) sched.style.display = 'none';
+  if (confirmed) confirmed.style.display = '';
+}
+// ===== CALL TIMER =====
+let timerInterval = null;
+let callSeconds = 47;
+function startCallTimer() {
+  stopCallTimer();
+  timerInterval = setInterval(() => {
+    callSeconds++;
+    const m = Math.floor(callSeconds / 60);
+    const s = callSeconds % 60;
+    const el = document.getElementById('callTimerDisplay');
+    if (el) el.textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+}
+function stopCallTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  callSeconds = 47;
+  const el = document.getElementById('callTimerDisplay');
+  if (el) el.textContent = '0:47';
+}
+
+// ===== MUTE / HOLD =====
+function toggleMute() {
+  const btn = document.getElementById('muteBtn');
+  btn.classList.toggle('active');
+  btn.title = btn.classList.contains('active') ? 'Unmute' : 'Mute';
+  btn.textContent = btn.classList.contains('active') ? '🔇' : '🎙';
+}
+function toggleHold() {
+  const btn = document.getElementById('holdBtn');
+  btn.classList.toggle('active');
+  const statusText = document.getElementById('callStatusText');
+  if (btn.classList.contains('active')) {
+    statusText.textContent = 'On Hold · Sarah Chen';
+  } else {
+    statusText.textContent = 'Connected · Sarah Chen';
+  }
+}
+
+// ===== DISPOSITION =====
+function showDisposition() {
+  document.getElementById('dispModal').classList.remove('hidden');
+  // Reset to default selection
+  document.querySelectorAll('.disp-chip').forEach(c => c.classList.remove('selected'));
+  const first = document.querySelector('#dispModal .disp-chip');
+  if (first) first.classList.add('selected');
+  ['wrongNumberPanel','referredPanel','snoozePanel'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) p.style.display = 'none';
+  });
+  selectSeqAction('stop'); // default: "Interested / Meeting Booked" → Stop
+  updateBranchingSummary('meeting');
+}
+function hideDisposition() {
+  document.getElementById('dispModal').classList.add('hidden');
+}
+function nextLead() {
+  hideDisposition();
+  showScreen('active-call');
+  // Simulate advancing to next lead
+  document.querySelector('.queue-lead.active-call').classList.remove('active-call');
+  const leads = document.querySelectorAll('.queue-lead');
+  if (leads[1]) leads[1].classList.add('active-call');
+  document.querySelector('.prospect-name-big').textContent = 'Marcus Johnson';
+  document.querySelector('.prospect-meta').textContent = 'VP Revenue · GrowthCo · New York, NY';
+  callSeconds = 0;
+}
+const branchingMap = {
+  'interested':    { calls:'→ Pause all future call steps', email:'→ Pause sequence · Log reply', crm:'→ Update status "Interested"' },
+  'meeting':       { calls:'→ Pause all future call steps', email:'→ Pause all future steps',     crm:'→ Update status "Meeting Scheduled" · Create event' },
+  'not-interested':{ calls:'→ Pause call steps permanently', email:'→ Send 1 break-up email, then stop', crm:'→ Update status "Not Interested"' },
+  'no-answer':     { calls:'→ Retry per cadence schedule',   email:'→ Continue sequence normally', crm:'→ Log call attempt + timestamp' },
+  'vm-left':       { calls:'→ Skip next call step (VM sent)',  email:'→ Continue sequence normally', crm:'→ Log "VM Left" with timestamp' },
+  'callback':      { calls:'→ Pause sequence · Set reminder', email:'→ Pause all steps till callback', crm:'→ Create callback task' },
+  'wrong-number':  { calls:'→ Suppress phone channel permanently', email:'→ Continue email/LinkedIn', crm:'→ Flag "Wrong Number" · Trigger re-enrichment' },
+  'referred':      { calls:'→ Pause call steps', email:'→ Pause all steps',  crm:'→ Log "Referred" · Add referral contact [V2]' },
+  'do-not-call':   { calls:'→ Suppress ALL channels permanently', email:'→ Suppress ALL channels permanently', crm:'→ DNC flag · Opt-out logged' },
+};
+function updateBranchingSummary(type) {
+  const data = branchingMap[type] || { calls:'—', email:'—', crm:'—' };
+  document.getElementById('bCalls').textContent = data.calls;
+  document.getElementById('bEmail').textContent = data.email;
+  document.getElementById('bCrm').textContent = data.crm;
+}
+function selectDisp(el, type) {
+  document.querySelectorAll('.disp-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  // Hide all sub-panels first
+  ['wrongNumberPanel','referredPanel','snoozePanel'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) p.style.display = 'none';
+  });
+  // Show relevant sub-panel
+  if (type === 'wrong-number') {
+    const panel = document.getElementById('wrongNumberPanel');
+    if (panel) {
+      panel.style.display = '';
+      // Animate the enrichment bar
+      const bar = document.getElementById('enrichBar');
+      if (bar) { bar.style.width = '0%'; setTimeout(() => { bar.style.transition = 'width 2s'; bar.style.width = '70%'; }, 50); }
+    }
+  } else if (type === 'referred') {
+    const panel = document.getElementById('referredPanel');
+    if (panel) panel.style.display = '';
+  }
+  // Set default sequence action based on scenario type
+  const stopScenarios = ['meeting','not-interested','referred'];
+  const snoozeScenarios = ['callback'];
+  if (stopScenarios.includes(type)) selectSeqAction('stop');
+  else if (snoozeScenarios.includes(type)) selectSeqAction('snooze');
+  else selectSeqAction('continue');
+  updateBranchingSummary(type || 'no-answer');
+}
+const seqActionHints = {
+  'continue': 'Sequence advances to the next step automatically.',
+  'stop': 'All future steps paused. Lead stays enrolled — resume anytime.',
+  'snooze': 'Call steps paused until snooze date. Email & LinkedIn continue.'
+};
+function selectSeqAction(action) {
+  ['actionContinue','actionStop','actionSnooze'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.className = 'seq-action-btn';
+  });
+  const map = { continue: 'actionContinue', stop: 'actionStop', snooze: 'actionSnooze' };
+  const btn = document.getElementById(map[action]);
+  if (btn) btn.classList.add('active-' + action);
+  const hint = document.getElementById('seqActionHint');
+  if (hint) hint.textContent = seqActionHints[action] || '';
+  // Show/hide snooze panel based on action
+  const sp = document.getElementById('snoozePanel');
+  if (sp) sp.style.display = action === 'snooze' ? '' : 'none';
+}
+function showSnoozePanel() {
+  // Toggle snooze panel; used internally — select "Call Back Later" chip as visual anchor
+  document.querySelectorAll('.disp-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.disp-chip').forEach(c => { if (c.textContent.includes('Call Back Later')) c.classList.add('selected'); });
+  ['wrongNumberPanel','referredPanel'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) p.style.display = 'none';
+  });
+  const sp = document.getElementById('snoozePanel');
+  if (sp) sp.style.display = '';
+  updateBranchingSummary('callback');
+}
+function selectDispCallback(el) {
+  // "Call Back Later" chip: selectDisp handles setting Snooze as the default action
+  selectDisp(el, 'callback');
+}
+function selectSnooze(el, duration) {
+  document.querySelectorAll('#snoozePanel .disp-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const customDate = document.getElementById('snoozeCustomDate');
+  const indef = document.getElementById('snoozeIndefiniteNote');
+  if (customDate) customDate.style.display = duration === 'custom' ? '' : 'none';
+  if (indef) indef.style.display = duration === 'indef' ? '' : 'none';
+  const durationLabels = { '1w': '1 week', '2w': '2 weeks', '1m': '1 month', 'indef': 'indefinitely', 'custom': 'custom date' };
+  const lbl = document.getElementById('snoozeDurationLabel');
+  if (lbl) lbl.textContent = '📞 Call steps paused for ' + (durationLabels[duration] || duration);
+}
+
+// ===== MODE SELECTOR =====
+function selectMode(el, mode) {
+  document.querySelectorAll('.mode-option').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+  document.querySelectorAll('.mode-option .mode-radio').forEach(r => {
+    r.innerHTML = '';
+  });
+  el.querySelector('.mode-radio').innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:#0d9488;margin:auto"></div>';
+}
+function changeParallel(delta, e) {
+  e.stopPropagation();
+  const el = document.getElementById('parallelVal');
+  let v = parseInt(el.textContent) + delta;
+  v = Math.max(2, Math.min(10, v));
+  el.textContent = v;
+}
+
+// ===== CONTEXT TABS =====
+function switchContextTab(tab, target) {
+  document.querySelectorAll('.context-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  ['ctx-lead-details','ctx-research','ctx-activity','ctx-call-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const target_el = document.getElementById('ctx-' + target);
+  if (target_el) target_el.style.display = '';
+}
+
+// ===== CONSENT BANNER =====
+let consentTimer = null;
+function startConsentCountdown() {
+  const banner = document.getElementById('consentBanner');
+  const countdown = document.getElementById('consentCountdown');
+  if (!banner || !countdown) return;
+  banner.style.display = 'flex';
+  let secs = 3;
+  countdown.textContent = secs + 's';
+  consentTimer = setInterval(() => {
+    secs--;
+    if (secs <= 0) { dismissConsent(); }
+    else { countdown.textContent = secs + 's'; }
+  }, 1000);
+}
+function dismissConsent() {
+  clearInterval(consentTimer);
+  const b = document.getElementById('consentBanner');
+  if (b) b.style.display = 'none';
+}
+
+// ===== VM DROP CANCEL =====
+let vmTimer = null;
+function startVMCountdown() {
+  const el = document.getElementById('vmCountdown');
+  if (!el) return;
+  let secs = 3;
+  el.textContent = 'Auto-dropping in ' + secs + 's…';
+  vmTimer = setInterval(() => {
+    secs--;
+    if (secs <= 0) {
+      clearInterval(vmTimer);
+      document.getElementById('vmBanner').style.display = 'none';
+    } else {
+      el.textContent = 'Auto-dropping in ' + secs + 's…';
+    }
+  }, 1000);
+}
+function cancelVMDrop() {
+  clearInterval(vmTimer);
+  document.getElementById('vmBanner').style.display = 'none';
+}
+
+// ===== LEADS SIDE PANEL =====
+const leadData = {
+  julie: { name:'Julie Naugler', role:'Senior Sales Leader', company:'Halifax Tides FC', avatar:'JN', color:'#0f4c81', campaign:'Sports Leagues - MS', hasDialer:false },
+  abby:  { name:'Abby Landes',   role:'Head Of Sales',       company:'Vyten',            avatar:'AL', color:'#f59e0b', campaign:'Metaphor Based Test', hasDialer:false },
+  chad:  { name:'Chad Couture',  role:'VP, Solect Energy',   company:'Solect Energy',    avatar:'CC', color:'#f97316', campaign:'AF- Julian Sol…nels', hasDialer:true,  phone:'+1 (628) 555-0134', score:96, signal:'📱 Clicked CTA · 30m ago' },
+  gavin: { name:'Gavin Wilmot',  role:'Global Sales Leader', company:'Engineered Arts',  avatar:'GW', color:'#1e3a5f', campaign:'Sales Leaders - 1.26', hasDialer:true,  phone:'+44 20 5555 0187',  score:88, signal:'✉️ Opened email · 2h ago' },
+  thomas:{ name:'Thomas Meyer',  role:'AI transformation',   company:'Amyam GmbH',       avatar:'TM', color:'#6b7280', campaign:'EMEA - Concise - CRO/CSO', hasDialer:false },
+  sarah: { name:'Sarah Chen',    role:'Head of Sales',       company:'TechCorp Inc.',    avatar:'SC', color:'#0d9488', campaign:'Cold Outbound — Q1', hasDialer:false },
+  dan:   { name:'Dan Strauss',   role:'VP Of Sales',         company:'Avarra',           avatar:'DS', color:'#2d4a3e', campaign:'Sales Leaders - 1.26', hasDialer:true,  phone:'+1 (415) 555-0192', score:91, signal:'💼 LinkedIn visit · 1h ago' },
+  jack:  { name:'Jack Stevens',  role:'Sales & Mktg Ops',    company:'Zenopa',           avatar:'JS', color:'#7c3aed', campaign:'RevOps - 2.2', hasDialer:false },
+  marcus:{ name:'Marcus Johnson',role:'VP Revenue',           company:'GrowthCo',         avatar:'MJ', color:'#6b7280', campaign:'Cold Outbound — Q1', hasDialer:true, phone:null, score:78, signal:'✉️ Opened email · 6h ago', noPhone:true }
+};
+function openLeadPanel(key) {
+  const d = leadData[key] || leadData.abby;
+  document.getElementById('spName').textContent = d.name;
+  document.getElementById('spRole').textContent = d.role;
+  document.getElementById('spCompany').textContent = d.company;
+  document.getElementById('spAvatar').textContent = d.avatar;
+  document.getElementById('spAvatar').style.background = d.color;
+  document.getElementById('spCampaign').textContent = d.campaign;
+  document.getElementById('spInfoName').textContent = d.name;
+  document.getElementById('spInfoRole').textContent = d.role;
+  document.getElementById('spInfoCompany').textContent = d.company;
+  // Update status tag in header
+  const statusTag = document.getElementById('spStatusTag');
+  if (statusTag) {
+    if (d.hasDialer) {
+      statusTag.textContent = '📞 Call Step Due';
+      statusTag.style.background = '#f0fdf9';
+      statusTag.style.color = '#0f766e';
+      statusTag.style.border = '1px solid #99f6e4';
+    } else {
+      statusTag.textContent = '📋 Information Request';
+      statusTag.style.background = '';
+      statusTag.style.color = '';
+      statusTag.style.border = '';
+    }
+  }
+  // Show/hide dialer section based on hasDialer flag
+  const dialerSection = document.getElementById('sp-dialer-section');
+  if (dialerSection) {
+    dialerSection.style.display = d.hasDialer ? '' : 'none';
+    if (d.hasDialer) {
+      const phoneEl = document.getElementById('spPhoneNum');
+      const callBtn = document.getElementById('spCallBtn');
+      if (d.noPhone) {
+        if (phoneEl) phoneEl.innerHTML = '<span style="color:#f59e0b">⏳ Enriching phone number via FullEnrich…</span>';
+        if (callBtn) { callBtn.disabled = true; callBtn.style.opacity = '.4'; callBtn.style.cursor = 'not-allowed'; }
+        // Show enrichment note
+        let noPhoneNote = document.getElementById('spNoPhoneNote');
+        if (!noPhoneNote) {
+          noPhoneNote = document.createElement('div');
+          noPhoneNote.id = 'spNoPhoneNote';
+          noPhoneNote.style.cssText = 'font-size:11px;color:#888;margin-top:6px;padding:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px';
+          noPhoneNote.textContent = 'Call step will be skipped if no number is found. Email & LinkedIn continue.';
+          phoneEl && phoneEl.parentNode.insertBefore(noPhoneNote, phoneEl.nextSibling);
+        }
+        noPhoneNote.style.display = '';
+      } else {
+        if (phoneEl) phoneEl.textContent = '📱 ' + (d.phone || '+1 (415) 555-0192');
+        if (callBtn) { callBtn.disabled = false; callBtn.style.opacity = '1'; callBtn.style.cursor = 'pointer'; }
+        const noPhoneNote = document.getElementById('spNoPhoneNote');
+        if (noPhoneNote) noPhoneNote.style.display = 'none';
+      }
+      document.getElementById('spCallScore').textContent = d.score || '—';
+      const sig = document.getElementById('spCallSignal');
+      if (d.signal) { sig.textContent = d.signal; sig.style.display = ''; }
+      else { sig.style.display = 'none'; }
+    }
+  }
+  document.getElementById('leadSidePanel').classList.remove('hidden');
+  // Highlight row
+  document.querySelectorAll('.leads-table tr').forEach(r => r.classList.remove('selected-row'));
+  event.currentTarget.classList.add('selected-row');
+  // Reset to sequence tab
+  switchSPTab(document.querySelector('.side-panel-tab'), 'sp-sequence');
+}
+function closeLeadPanel() {
+  document.getElementById('leadSidePanel').classList.add('hidden');
+}
+function switchSPTab(tab, target) {
+  document.querySelectorAll('.side-panel-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  ['sp-sequence','sp-activity','sp-lead-info','sp-research'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (id === target) ? '' : 'none';
+  });
+}
+function selectDialMode(el) {
+  document.querySelectorAll('.dial-mode-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const pRow = document.getElementById('parallelRowSP');
+  if (pRow) pRow.style.display = el.textContent.includes('Parallel') ? 'flex' : 'none';
+}
+function changeSPParallel(delta, e) {
+  e.stopPropagation();
+  const el = document.getElementById('spParallelVal');
+  if (!el) return;
+  let v = parseInt(el.textContent) + delta;
+  el.textContent = Math.max(2, Math.min(10, v));
+}
+
+// ===== MASTER DIALER BUTTON =====
+function updateDialerBtn() {
+  const checkedDialerRows = [...document.querySelectorAll('.leads-table tr.has-dialer input[type=checkbox]:checked')];
+  const btn = document.getElementById('masterDialerBtn');
+  if (!btn) return;
+  const count = checkedDialerRows.length;
+  if (count > 0) {
+    btn.classList.add('active');
+    btn.title = count + ' call-due lead' + (count !== 1 ? 's' : '') + ' selected — click to start session';
+    document.getElementById('dialerLeadCount').textContent = count + ' call-due lead' + (count !== 1 ? 's' : '') + ' selected';
+  } else {
+    btn.classList.remove('active');
+    btn.title = 'Select at least 1 lead with a pending call step';
+  }
+}
+function openDialerSession(e) {
+  const checkedDialerRows = [...document.querySelectorAll('.leads-table tr.has-dialer input[type=checkbox]:checked')];
+  if (!checkedDialerRows.length) return;
+  document.getElementById('dialerSessionModal').style.display = 'flex';
+}
+function closeDialerModal() {
+  document.getElementById('dialerSessionModal').style.display = 'none';
+}
+let autopilotOn = false;
+function toggleAutopilot() {
+  // V2 feature — shows as toggle-able but notes V2 requirement
+  autopilotOn = !autopilotOn;
+  const track = document.getElementById('autopilotToggle');
+  const thumb = document.getElementById('autopilotThumb');
+  if (track) track.style.background = autopilotOn ? '#0d9488' : '#d1d5db';
+  if (thumb) thumb.style.left = autopilotOn ? '18px' : '2px';
+  const wrap = track ? track.parentElement.parentElement : null;
+  if (wrap) wrap.style.opacity = autopilotOn ? '1' : '.65';
+}
+let sessionMode = 'power';
+function selectSessionMode(mode) {
+  sessionMode = mode;
+  const isPower = mode === 'power';
+  // Power card
+  document.getElementById('smPower').classList.toggle('selected', isPower);
+  document.getElementById('smPowerRadio').innerHTML = isPower
+    ? '<div style="width:8px;height:8px;border-radius:50%;background:#0d9488"></div>' : '';
+  document.getElementById('smPowerRadio').style.borderColor = isPower ? '#0d9488' : '#d1d5db';
+  // Parallel card
+  document.getElementById('smParallel').classList.toggle('selected', !isPower);
+  document.getElementById('smParallelRadio').innerHTML = !isPower
+    ? '<div style="width:8px;height:8px;border-radius:50%;background:#0d9488"></div>' : '';
+  document.getElementById('smParallelRadio').style.borderColor = !isPower ? '#0d9488' : '#d1d5db';
+  // Show/hide parallel controls
+  document.getElementById('smParallelControls').style.display = !isPower ? 'flex' : 'none';
+}
+function changeSessionLines(delta, e) {
+  e.stopPropagation();
+  const el = document.getElementById('smLinesVal');
+  let v = parseInt(el.textContent) + delta;
+  el.textContent = Math.max(2, Math.min(10, v));
+}
+function startDialerSession() {
+  closeDialerModal();
+  showScreen('active-call');
+}
+
+// ===== FILTER DROPDOWN =====
+function toggleFilterDrop() {
+  document.getElementById('filterDropdown').classList.toggle('hidden');
+}
+function toggleSubFilter(id) {
+  document.getElementById(id).classList.toggle('hidden');
+}
+const filterLabels = {
+  group:'Group', campaign:'Campaign', sender:'Sender', status:'Status',
+  'last-message':'Last Message', channel:'Channel', geography:'Geography',
+  timezone:'Timezone', company:'Company', disposition:'Disposition History'
+};
+const filterValLabels = {
+  'status-copilot':'⬤ Status · 🤖 Co-pilot',
+  'status-negative-reply':'⬤ Status · 👎 Negative Reply',
+  'status-positive-reply':'⬤ Status · 👍 Positive Reply',
+  'status-unreachable':'⬤ Status · 📵 Unreachable',
+  'status-dialer':'⬤ Status · 📞 Dialer',
+  'geography-US':'Geography · 🇺🇸 US',
+  'geography-UK':'Geography · 🇬🇧 UK',
+  'geography-EU':'Geography · 🇪🇺 EU',
+  'geography-APAC':'Geography · 🌏 APAC',
+  'timezone-ET':'Timezone · ET',
+  'timezone-CT':'Timezone · CT',
+  'timezone-PT':'Timezone · PT',
+  'timezone-GMT':'Timezone · GMT ⚠️',
+  'timezone-IST':'Timezone · IST 🚫',
+  'disposition-callbacks':'Disposition · Callbacks Due',
+  'disposition-retries':'Disposition · Retries',
+  'disposition-vm-left':'Disposition · VM Left',
+  'disposition-gatekeeper':'Disposition · Gatekeeper',
+};
+function applyFilter(key) {
+  document.getElementById('filterDropdown').classList.add('hidden');
+  addFilterChip(key, filterLabels[key]+' · Any ▾');
+}
+function applyFilterVal(key, val) {
+  document.getElementById('filterDropdown').classList.add('hidden');
+  const chipKey = key+'-'+val;
+  addFilterChip(chipKey, filterValLabels[chipKey] || (filterLabels[key]+' · '+val));
+  // Clear any active dialer filter if switching to another status
+  if (key === 'status' && val !== 'dialer') clearDialerFilter();
+}
+function applyStatusDialer() {
+  document.getElementById('filterDropdown').classList.add('hidden');
+  addFilterChip('status-dialer', '⬤ Status · 📞 Dialer');
+  applyDialerFilter();
+}
+function applyStatusDialerBH() {
+  document.getElementById('filterDropdown').classList.add('hidden');
+  // Remove any existing dialer filter chip first to avoid duplicate
+  const existing = document.getElementById('fchip-status-dialer');
+  if (existing) existing.remove();
+  addFilterChip('status-dialer-bh', '⬤ Status · 📞 Dialer · 📅 Business Hours');
+  applyDialerFilter(); // still shows only has-dialer rows (BH is a conceptual sub-filter in this prototype)
+}
+function applyDialerFilter() {
+  document.querySelectorAll('.leads-table tbody tr').forEach(row => {
+    row.style.display = row.classList.contains('has-dialer') ? '' : 'none';
+  });
+}
+function clearDialerFilter() {
+  document.querySelectorAll('.leads-table tbody tr').forEach(row => {
+    row.style.display = '';
+  });
+}
+function addFilterChip(key, label) {
+  const af = document.getElementById('activeFilters');
+  if (document.getElementById('fchip-'+key)) return;
+  const chip = document.createElement('div');
+  chip.className = 'active-filter-chip';
+  chip.id = 'fchip-'+key;
+  chip.innerHTML = label+' <span class="chip-x" onclick="event.stopPropagation();removeFilter(\''+key+'\')">×</span>';
+  af.appendChild(chip);
+}
+function removeFilter(key) {
+  const el = document.getElementById('fchip-'+key);
+  if (el) el.remove();
+  if (key === 'status-dialer' || key === 'status-dialer-bh') clearDialerFilter();
+}
+function filterSearch(val) {
+  const q = val.toLowerCase();
+  document.querySelectorAll('#filterDropdown .filter-opt').forEach(opt => {
+    opt.style.display = (!q || opt.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+}
+// Close filter dropdown on outside click
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('filterDropdown');
+  const btn = document.getElementById('addFilterBtn');
+  if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
+    dd.classList.add('hidden');
+  }
+});
+
+// Init
+showScreen('campaigns');
+</script>
+</body>
+</html>
